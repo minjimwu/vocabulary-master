@@ -166,17 +166,10 @@ class App {
                 // 大魔王勝利 -> 播放終極動畫
                 this.audio.playBossVictorySound();
                 this.ui.showFinalVictoryAnimation(() => {
-                    this.ui.renderStageResult(
-                        true,
-                        true, // isBoss (Big Boss也是Boss)
-                        this.currentCategory,
-                        this.gameState.stageNumber,
-                        0,
-                        stats,
-                        this.gameState
-                    );
+                    // 大魔王勝利後直接回首頁，不顯示結算畫面
+                    this.ui.renderCategorySelection();
                 });
-                return; // 暫停渲染結果畫面，等待動畫結束
+                return; // 暫停渲染，等待動畫結束後直接回首頁
             } else if (this.gameState.isBoss) {
                 this.audio.playBossVictorySound();
             } else {
@@ -205,9 +198,9 @@ class App {
         if (exists) {
             this.startStage(this.currentCategory, nextIndex);
         } else {
-            // 沒有下一關了，返回關卡選擇
+            // 沒有下一關了，返回首頁 (分類選擇)
             alert('恭喜完成所有關卡!');
-            this.backToStageSelection();
+            this.ui.renderCategorySelection();
         }
     }
 

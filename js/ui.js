@@ -261,6 +261,7 @@ class UI {
     setTimeout(() => {
       overlay.classList.add('fade-out');
       setTimeout(() => {
+        overlay.remove();
         if (onComplete) onComplete();
       }, 1000);
     }, 4000);
