@@ -147,6 +147,8 @@ class App {
             }
 
             // 顯示答錯對話框
+            // 播放正確單字的發音
+            this.audio.speak(currentQ.correctWord.word);
             this.ui.showWrongAnswerDialog(currentQ, () => {
                 this.gameState.nextQuestion();
                 this.showNextQuestion();
@@ -222,6 +224,8 @@ class App {
                     }
 
                     // 顯示答錯對話框
+                    // 播放正確單字的發音
+                    this.audio.speak(currentQ.correctWord.word);
                     this.ui.showWrongAnswerDialog(currentQ, () => {
                         this.gameState.nextQuestion();
                         this.showNextQuestion();

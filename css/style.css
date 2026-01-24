@@ -213,19 +213,63 @@ body {
   text-align: center;
   margin-bottom: 30px;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  /* 預留空間 */
 }
 
-.monster-image {
-  width: 200px;
-  height: 200px;
-  object-fit: contain;
+/* 怪物 Emoji 樣式 */
+.monster-emoji {
+  font-size: 100px;
+  line-height: 1;
   filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
   transition: all 0.3s ease;
+  cursor: default;
+  user-select: none;
 }
 
-.monster-image.hit {
+.monster-emoji.boss {
+  font-size: 130px;
+  filter: drop-shadow(0 10px 20px rgba(251, 191, 36, 0.5));
+  animation: float 3s ease-in-out infinite;
+}
+
+.monster-emoji.big-boss {
+  font-size: 160px;
+  filter: drop-shadow(0 10px 30px rgba(220, 38, 38, 0.6));
+  animation: pulse-scale 2s infinite ease-in-out;
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes pulse-scale {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.monster-emoji.hit {
   animation: shake 0.5s;
-  filter: drop-shadow(0 10px 20px rgba(255, 0, 0, 0.6)) brightness(1.5);
+  filter: drop-shadow(0 0 30px rgba(255, 0, 0, 0.8)) brightness(1.5);
 }
 
 @keyframes shake {
@@ -236,11 +280,15 @@ body {
   }
 
   25% {
-    transform: translateX(-10px);
+    transform: translateX(-10px) rotate(-5deg);
+  }
+
+  50% {
+    transform: translateX(10px) rotate(5deg);
   }
 
   75% {
-    transform: translateX(10px);
+    transform: translateX(-10px) rotate(-5deg);
   }
 }
 
@@ -586,8 +634,15 @@ body {
   width: 100%;
 }
 
-.learn-btn:hover {
+.learn-btn:hover:not(:disabled) {
   transform: scale(1.05);
+}
+
+.learn-btn:disabled {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
 }
 
 @keyframes fadeIn {
@@ -617,8 +672,17 @@ body {
   display: flex;
   justify-content: center;
   gap: 10px;
-  margin: 10px 0;
   font-size: 32px;
+
+  /* 移至左上角 */
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 8px 16px;
+  border-radius: 20px;
+  backdrop-filter: blur(5px);
+  z-index: 10;
 }
 
 .heart {
@@ -833,6 +897,7 @@ body {
   font-size: 24px;
   letter-spacing: 2px;
 }
+
 /* 單字組成題樣式 */
 .word-assembly-container {
   display: flex;
@@ -882,6 +947,7 @@ body {
     transform: scale(0.8);
     opacity: 0;
   }
+
   to {
     transform: scale(1);
     opacity: 1;

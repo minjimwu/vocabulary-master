@@ -65,10 +65,24 @@ class UI {
     return html;
   }
 
+  // 獲取隨機怪物 Emoji
+  getMonsterEmoji(isBigBoss, isBoss) {
+    if (isBigBoss) {
+      const bosses = ['🐉', '🐲', '🌋', '🌩️', '👹'];
+      return bosses[Math.floor(Math.random() * bosses.length)];
+    } else if (isBoss) {
+      const miniBosses = ['🦖', '🦍', '🦁', '🐯', '🐻', '🦈', '🐊', '🐃', '🦏', '🐘'];
+      return miniBosses[Math.floor(Math.random() * miniBosses.length)];
+    } else {
+      const monsters = ['😈', '👺', '👻', '👽', '👾', '🤖', '🎃', '🦇', '🐍', '🕷️', '🐺', '🦂'];
+      return monsters[Math.floor(Math.random() * monsters.length)];
+    }
+  }
+
   // 渲染遊戲戰鬥界面
   renderGameScreen(gameState) {
-    // 大魔王使用特定圖片，或 boss 圖片
-    const monsterImage = this.getMonsterImage(gameState.category, gameState.isBoss || gameState.isBigBoss);
+    // 根據怪物類型選擇 emoji
+    const monsterEmoji = this.getMonsterEmoji(gameState.isBigBoss, gameState.isBoss);
 
     // 生成初始愛心 HTML
     let heartsHtml = '';
@@ -85,21 +99,22 @@ class UI {
             <h2>${gameState.category} - 關卡 ${gameState.stageNumber}</h2>
             <div class="stage-type">${titlePrefix}</div>
           </div>
+          <div class="hearts-container" id="hearts-container">
+            ${heartsHtml}
+          </div>
           <button class="escape-btn" onclick="app.escapeStage()">🏃 逃跑</button>
         </div>
         
         <div class="monster-container">
-          <img src="${monsterImage}" alt="怪物" class="monster-image" id="monster">
+          <div class="monster-emoji ${gameState.isBigBoss ? 'big-boss' : (gameState.isBoss ? 'boss' : 'normal')}" id="monster">
+            ${monsterEmoji}
+          </div>
           
           <div class="monster-stats">
             <div class="monster-hp-container">
                 <div class="monster-hp-bar" id="monster-hp-bar" style="width: 100%"></div>
                 <div class="monster-hp-text" id="monster-hp-text">${gameState.monsterHP} / ${gameState.maxMonsterHP}</div>
             </div>
-          </div>
-
-          <div class="hearts-container" id="hearts-container">
-            ${heartsHtml}
           </div>
         </div>
 
@@ -266,16 +281,30 @@ class UI {
                     ${question.correctWord.word}<br>
                     ${question.correctWord.chinese}
                 </div>
-                <button class="learn-btn" id="learn-btn">我領悟了弱點</button>
+                <button class="learn-btn" id="learn-btn" disabled>我領悟了弱點 (5)</button>
             </div>
         `;
 
     this.app.appendChild(overlay);
 
     const btn = overlay.querySelector('#learn-btn');
-    btn.focus();
+
+    // 強制倒數 5 秒
+    let countdown = 5;
+    const intervalId = setInterval(() => {
+      countdown--;
+      if (countdown > 0) {
+        btn.textContent = `我領悟了弱點 (${countdown})`;
+      } else {
+        clearInterval(intervalId);
+        btn.textContent = '我領悟了弱點';
+        btn.disabled = false;
+        btn.focus();
+      }
+    }, 1000);
 
     btn.onclick = () => {
+      if (btn.disabled) return; // double check
       overlay.remove();
       if (onContinue) onContinue();
     };
