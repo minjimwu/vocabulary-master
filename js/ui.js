@@ -138,16 +138,38 @@ class UI {
     // 根據題型設置提示文字
     if (question.mode === 'fill-in-blank') {
       modeHintEl.textContent = '選擇正確的字母填入空格';
+    } else if (question.mode === 'word-assembly') {
+      modeHintEl.textContent = '依序選擇正確的部分拼成單字';
     } else {
       modeHintEl.textContent = question.mode === 'zh-to-en' ? '選擇英文武器' : '選擇中文武器';
     }
     counterEl.textContent = `題目 ${questionNumber}`;
 
-    weaponsEl.innerHTML = question.options.map((option, index) => `
-      <button class="weapon-btn" onclick="app.selectWeapon('${option.replace(/'/g, "\\'")}')">
-        ${option}
-      </button>
-    `).join('');
+    // 單字組成題的特殊渲染
+    if (question.mode === 'word-assembly') {
+      weaponsEl.innerHTML = `
+        <div class="word-assembly-container">
+          <div class="selected-parts" id="selected-parts">
+            ${question.selectedParts.map(part => `<span class="word-part selected">${part}</span>`).join('')}
+            ${Array(3 - question.selectedParts.length).fill('<span class="word-part empty">?</span>').join('')}
+          </div>
+          <div class="remaining-options">
+            ${question.remainingOptions.map(option => `
+              <button class="weapon-btn word-part-btn" onclick="app.selectWordPart('${option.replace(/'/g, "\\'")}')">
+                ${option}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    } else {
+      // 普通題目渲染
+      weaponsEl.innerHTML = question.options.map((option, index) => `
+        <button class="weapon-btn" onclick="app.selectWeapon('${option.replace(/'/g, "\\'")}')">
+          ${option}
+        </button>
+      `).join('');
+    }
   }
 
   // 更新狀態
@@ -174,6 +196,28 @@ class UI {
       }
     }
     container.innerHTML = html;
+  }
+
+  // 更新單字組成題顯示
+  updateWordAssembly(question) {
+    const selectedPartsEl = document.getElementById('selected-parts');
+    if (!selectedPartsEl) return;
+
+    selectedPartsEl.innerHTML = `
+      ${question.selectedParts.map(part => `<span class="word-part selected">${part}</span>`).join('')}
+      ${Array(3 - question.selectedParts.length).fill('<span class="word-part empty">?</span>').join('')}
+    `;
+
+    // 更新剩餘選項
+    const weaponsEl = document.getElementById('weapons');
+    const remainingOptionsEl = weaponsEl.querySelector('.remaining-options');
+    if (remainingOptionsEl) {
+      remainingOptionsEl.innerHTML = question.remainingOptions.map(option => `
+        <button class="weapon-btn word-part-btn" onclick="app.selectWordPart('${option.replace(/'/g, "\\'")}')" >
+          ${option}
+        </button>
+      `).join('');
+    }
   }
 
   // 更新怪物 HP 條

@@ -154,6 +154,82 @@ class App {
         }
     }
 
+    // 選擇單字部分（單字組成題專用）
+    selectWordPart(part) {
+        const currentQ = this.gameState.currentQuestion;
+
+        // 添加選中的部分
+        currentQ.selectedParts.push(part);
+
+        // 從剩餘選項中移除
+        const index = currentQ.remainingOptions.indexOf(part);
+        if (index > -1) {
+            currentQ.remainingOptions.splice(index, 1);
+        }
+
+        // 更新 UI 顯示
+        this.ui.updateWordAssembly(currentQ);
+
+        // 如果已選擇3個部分，檢查答案
+        if (currentQ.selectedParts.length === 3) {
+            // 禁用所有按鈕
+            document.querySelectorAll('.weapon-btn').forEach(btn => {
+                btn.disabled = true;
+            });
+
+            setTimeout(() => {
+                // 檢查順序是否正確
+                const isCorrect = currentQ.selectedParts.every((part, index) => part === currentQ.answer[index]);
+
+                if (isCorrect) {
+                    // 答對
+                    this.audio.playHitSound();
+                    this.ui.animateHit();
+                    this.gameState.correctAnswers++;
+                    this.gameState.updateStatus(true);
+                    this.ui.updateStatus(
+                        this.gameState.hearts,
+                        this.gameState.maxHearts,
+                        this.gameState.monsterHP,
+                        this.gameState.maxMonsterHP
+                    );
+
+                    if (this.gameState.checkStageEnd()) {
+                        setTimeout(() => this.endStage(true), 1000);
+                        return;
+                    }
+
+                    setTimeout(() => {
+                        this.gameState.nextQuestion();
+                        this.showNextQuestion();
+                    }, 1000);
+
+                } else {
+                    // 答錯
+                    this.audio.playMissSound();
+                    this.gameState.retryQuestions.push(currentQ.correctWord);
+                    this.gameState.updateStatus(false);
+                    this.ui.updateStatus(
+                        this.gameState.hearts,
+                        this.gameState.maxHearts,
+                        this.gameState.monsterHP,
+                        this.gameState.maxMonsterHP
+                    );
+
+                    if (this.gameState.hearts <= 0) {
+                        setTimeout(() => this.endStage(false), 1000);
+                        return;
+                    }
+
+                    // 顯示答錯對話框
+                    this.ui.showWrongAnswerDialog(currentQ, () => {
+                        this.gameState.nextQuestion();
+                        this.showNextQuestion();
+                    });
+                }
+            }, 300);
+        }
+    }
 
 
     // 結束關卡

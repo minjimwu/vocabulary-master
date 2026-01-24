@@ -151,7 +151,7 @@ class GameState {
         return [];
     }
 
-    // 生成題目 (未變更)
+    // 生成題目
     generateQuestion() {
         let questionWord = null;
 
@@ -170,7 +170,22 @@ class GameState {
         }
 
         const correctWord = questionWord;
-        const mode = Math.random() < 0.5 ? 'zh-to-en' : 'en-to-zh';
+
+        // 隨機決定題型 (4種題型，各25%機率)
+        const rand = Math.random();
+
+        // 單字組成題 (25%)：需要至少3個字母
+        if (correctWord.word.length >= 3 && rand < 0.25) {
+            return this.generateWordAssemblyQuestion(correctWord);
+        }
+
+        // 填空題 (25%)：需要至少2個字母
+        if (correctWord.word.length >= 2 && rand < 0.5) {
+            return this.generateFillInBlankQuestion(correctWord);
+        }
+
+        // 中文->英文 或 英文->中文 (各25%)
+        const mode = rand < 0.75 ? 'zh-to-en' : 'en-to-zh';
         const wrongOptions = this.getWrongOptions(correctWord, 2);
         const options = this.shuffleArray([
             correctWord,
@@ -183,6 +198,130 @@ class GameState {
             options: options.map(opt => mode === 'zh-to-en' ? opt.word : opt.chinese),
             answer: mode === 'zh-to-en' ? correctWord.word : correctWord.chinese,
             correctWord: correctWord
+        };
+
+        return this.currentQuestion;
+    }
+
+    // 生成填空題
+    generateFillInBlankQuestion(correctWord) {
+        const word = correctWord.word;
+        const len = word.length;
+
+        // 決定去除的長度：1 到 4 個字母，且不能超過 len - 1 (不全空)
+        const maxRemove = Math.min(4, len - 1); // 至少留 1 個字，最多去 4 個
+        if (maxRemove < 1) { // 應該不會發生，因為前面有檢查 length >= 2
+            // fallback
+            return this.generateQuestion();
+        }
+
+        const removeCount = Math.floor(Math.random() * maxRemove) + 1; // 1 to maxRemove
+
+        // 決定起始位置
+        const maxStartIndex = len - removeCount;
+        const startIndex = Math.floor(Math.random() * (maxStartIndex + 1));
+
+        const extractedPart = word.substring(startIndex, startIndex + removeCount);
+
+        // 生成 mask
+        const mask = '_'.repeat(removeCount);
+        const maskedWord = word.substring(0, startIndex) + mask + word.substring(startIndex + removeCount);
+
+        // 生成錯誤選項 (2個)
+        // 選項邏輯：
+        // 1. 可以是其他單字的隨機子串 (相同長度)
+        // 2. 如果找不到，就隨機生成字母
+        const wrongOptions = [];
+        let attempts = 0;
+
+        while (wrongOptions.length < 2 && attempts < 50) {
+            attempts++;
+            // 隨機挑個單字
+            const randomWordObj = this.allVocabulary[Math.floor(Math.random() * this.allVocabulary.length)];
+            const otherWord = randomWordObj.word;
+
+            if (otherWord.length < removeCount) continue;
+
+            const start = Math.floor(Math.random() * (otherWord.length - removeCount + 1));
+            const part = otherWord.substring(start, start + removeCount);
+
+            // 不能跟正確答案一樣，也不能跟已有選項一樣
+            if (part !== extractedPart && !wrongOptions.includes(part)) {
+                wrongOptions.push(part);
+            }
+        }
+
+        // 如果還是湊不滿 (極端情況)，用隨機字母補
+        while (wrongOptions.length < 2) {
+            let randomStr = '';
+            const chars = 'abcdefghijklmnopqrstuvwxyz';
+            for (let k = 0; k < removeCount; k++) {
+                randomStr += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            if (randomStr !== extractedPart && !wrongOptions.includes(randomStr)) {
+                wrongOptions.push(randomStr);
+            }
+        }
+
+        const options = this.shuffleArray([extractedPart, ...wrongOptions]);
+
+        this.currentQuestion = {
+            mode: 'fill-in-blank',
+            // weakness 顯示 挖空的單字 + 中文提示 (用 HTML 換行)
+            weakness: `<span class="masked-word">${maskedWord}</span><br><span class="chinese-hint">${correctWord.chinese}</span>`,
+            options: options,
+            answer: extractedPart,
+            correctWord: correctWord
+        };
+
+        return this.currentQuestion;
+    }
+
+    // 生成單字組成題
+    generateWordAssemblyQuestion(correctWord) {
+        const word = correctWord.word;
+        const len = word.length;
+
+        // 將單字分成3個部分
+        let parts = [];
+
+        if (len === 3) {
+            // 3個字母：每個字母一個部分
+            parts = [word[0], word[1], word[2]];
+        } else if (len === 4) {
+            // 4個字母：1-2-1 或 1-1-2 或 2-1-1 隨機分配
+            const splitType = Math.floor(Math.random() * 3);
+            if (splitType === 0) {
+                parts = [word[0], word.substring(1, 3), word[3]];
+            } else if (splitType === 1) {
+                parts = [word[0], word[1], word.substring(2)];
+            } else {
+                parts = [word.substring(0, 2), word[2], word[3]];
+            }
+        } else {
+            // 5個字母以上：盡量平均分配
+            const part1Len = Math.floor(len / 3);
+            const part2Len = Math.floor((len - part1Len) / 2);
+            const part3Len = len - part1Len - part2Len;
+
+            parts = [
+                word.substring(0, part1Len),
+                word.substring(part1Len, part1Len + part2Len),
+                word.substring(part1Len + part2Len)
+            ];
+        }
+
+        // 打亂順序
+        const shuffledParts = this.shuffleArray([...parts]);
+
+        this.currentQuestion = {
+            mode: 'word-assembly',
+            weakness: correctWord.chinese,
+            options: shuffledParts,
+            answer: parts, // 正確順序
+            correctWord: correctWord,
+            selectedParts: [], // 玩家已選擇的部分
+            remainingOptions: [...shuffledParts] // 剩餘可選的部分
         };
 
         return this.currentQuestion;

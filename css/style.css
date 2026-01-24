@@ -833,3 +833,71 @@ body {
   font-size: 24px;
   letter-spacing: 2px;
 }
+/* 單字組成題樣式 */
+.word-assembly-container {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  align-items: center;
+}
+
+.selected-parts {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  min-height: 60px;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  border: 2px solid rgba(251, 191, 36, 0.5);
+}
+
+.word-part {
+  font-family: 'Courier New', monospace;
+  font-size: 32px;
+  font-weight: bold;
+  padding: 12px 20px;
+  border-radius: 8px;
+  min-width: 50px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.word-part.selected {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #1a202c;
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4);
+  animation: wordPartSlideIn 0.3s ease;
+}
+
+.word-part.empty {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.3);
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+}
+
+@keyframes wordPartSlideIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.remaining-options {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.word-part-btn {
+  font-family: 'Courier New', monospace;
+  font-size: 28px;
+  letter-spacing: 2px;
+  min-width: 80px;
+}
