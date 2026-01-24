@@ -68,9 +68,13 @@ class App {
         const question = this.gameState.generateQuestion();
 
         if (!question) {
-            // 題目已完成。檢查勝利。
-            if (this.gameState.checkStageEnd()) {
+            // 題目已完成。檢查結果。
+            if (this.gameState.monsterHP <= 0) {
                 this.endStage(true);
+            } else {
+                // 題目用完但怪物沒死 (通常不應該發生，因為有重試機制，除非邏輯錯誤或特殊設定)
+                // 但為了安全起見，視為失敗
+                this.endStage(false);
             }
             return;
         }
@@ -168,7 +172,8 @@ class App {
                         this.currentCategory,
                         this.gameState.stageNumber,
                         0,
-                        stats
+                        stats,
+                        this.gameState
                     );
                 });
                 return; // 暫停渲染結果畫面，等待動畫結束
@@ -185,7 +190,8 @@ class App {
             this.currentCategory,
             this.gameState.stageNumber,
             0,
-            stats
+            stats,
+            this.gameState
         );
     }
 
@@ -203,6 +209,12 @@ class App {
             alert('恭喜完成所有關卡!');
             this.backToStageSelection();
         }
+    }
+
+    // 逃跑
+    escapeStage() {
+        // 直接逃跑，不需要確認
+        this.backToStageSelection();
     }
 
     // 返回關卡選擇
@@ -240,6 +252,8 @@ let ui;
 // 頁面加載完成後初始化
 window.addEventListener('DOMContentLoaded', () => {
     app = new App();
+    window.app = app; // Explicitly expose to window
     ui = app.ui;
+    window.ui = ui;   // Explicitly expose to window
     app.init();
 });

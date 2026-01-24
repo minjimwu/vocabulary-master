@@ -25,76 +25,64 @@ class GameState {
     // 生成關卡地圖 (靜態方法)
     static generateStageMap(totalWords) {
         const stages = [];
-        const normalPerBoss = CONFIG.NORMAL_STAGES_PER_BOSS;
         let currentWordIndex = 0;
         let stageCount = 1;
-        let normalStageCount = 0;
 
-        // 循環生成普通關卡與小魔王
+        // 用於追蹤當前 "小魔王週期" 的起始點
+        let groupStartIndex = 0;
+        let normalStageCountInGroup = 0;
+
+        // 1. 循環生成普通關卡
         while (currentWordIndex < totalWords) {
-            // 普通關卡
             const start = currentWordIndex;
-            const end = Math.min(start + CONFIG.QUESTIONS_PER_STAGE, totalWords);
+            const end = Math.min(start + 10, totalWords); // 強制 10 個單字一組
 
-            const stageIndex = stageCount++;
-
+            // 加入普通關卡
             stages.push({
-                index: stageIndex,
+                index: stageCount++,
                 type: 'NORMAL',
                 start: start,
                 end: end,
-                label: `關卡 ${stageIndex}`
+                label: `關卡 ${stageCount - 1}`
             });
 
             currentWordIndex = end;
-            normalStageCount++;
+            normalStageCountInGroup++;
 
-            // 檢查是否需要插入小魔王
-            // 條件: 滿 3 個普通關卡 且 還有剩餘單字 (如果不剩單字，則最後會是大魔王)
-            if (normalStageCount === normalPerBoss && currentWordIndex < totalWords) {
+            // 每 3 關普通關卡後，插入一個小魔王
+            if (normalStageCountInGroup === 3) {
                 stages.push({
                     index: stageCount++,
                     type: 'BOSS', // 小魔王
-                    rangeEnd: currentWordIndex, // 包含直到目前的單字
+                    start: groupStartIndex,
+                    end: currentWordIndex, // 範圍: 這一組的開始到現在
                     label: `小魔王`
                 });
-                normalStageCount = 0; // 重置計數
+                // 重置組計數與起始點
+                normalStageCountInGroup = 0;
+                groupStartIndex = currentWordIndex;
             }
         }
 
-        // 最後如果最後一個關卡是小魔王，應該替換成大魔王? 
-        // 或者是追加一個大魔王。需求: "最後有大魔王"
-        // 如果剛好結束在小魔王之後，那就直接加一個大魔王。
-        // 如果結束在普通關卡之後(例如只剩2關)，那就追加一個小魔王(如果需要?)，然後再大魔王?
-        // 需求: "關卡 7: 小魔王... 因為已經沒有單字... 關卡 8: 大魔王... 改成 最後 才有大魔王"
-        // 邏輯: 所有的單字都走完普通關卡後，如果前一個不是BOSS，可能補一個小BOSS?
-        // 不，需求範例是: 單字 1-47 隨機出題... 大魔王
-        // 所以:
-        // 1. 生成所有普通關卡直到單字用完 (中間穿插小魔王)
-        // 2. 如果最後一個生成的正好是小魔王(因為剛好滿3關)，把它移除，或保留？
-        // 需求範例中: 關卡 6 (41-47) -> 關卡 7 (小魔王 31-47) -> 關卡 8 (大魔王 1-47)
-        // 這意味著即便最後不足 3 關 (4-6只有3關? 不, 4是Boss. 5,6是普通)，最後還是會有一個小魔王 covering the last chunk.
-        // 然後最後追加一個 Big Boss covering everything.
-
-        // 修正邏輯:
-        // 在上面的循環中，我們是每滿 3 關普通關卡加一個小魔王。
-        // 如果循環結束時，normalStageCount > 0 (表示有殘餘的普通關卡未經小魔王驗收)，
-        // 則追加一個小魔王。
-
-        if (normalStageCount > 0) {
+        // 2. 處理剩餘的普通關卡 (如果有殘餘未滿 3 關，或剛好滿了但循環結束)
+        // 注意: 如果剛好滿3關，上面的 if 會執行，normalStageCountInGroup 變為 0。
+        // 如果有剩餘 (例如 2 關)，則追加一個小魔王涵蓋這些剩餘關卡。
+        if (normalStageCountInGroup > 0) {
             stages.push({
                 index: stageCount++,
                 type: 'BOSS',
-                rangeEnd: currentWordIndex,
+                start: groupStartIndex,
+                end: currentWordIndex,
                 label: `小魔王`
             });
         }
 
-        // 最後追加大魔王
+        // 3. 最後追加大魔王 (包含所有單字)
         stages.push({
             index: stageCount++,
             type: 'BIG_BOSS',
-            rangeEnd: totalWords,
+            start: 0,
+            end: totalWords,
             label: `大魔王`
         });
 
@@ -122,13 +110,15 @@ class GameState {
         this.pendingQuestions = [...this.vocabularyList];
         this.retryQuestions = [];
 
-        // 設置愛心
-        this.maxHearts = CONFIG.PLAYER_HEARTS;
-        this.hearts = this.maxHearts;
+        // 設置愛心: 固定 3 顆
+        this.hearts = 3;
+        this.maxHearts = 3;
 
         // 設置怪物 HP
-        this.maxMonsterHP = this.calculateMonsterHP();
-        this.monsterHP = this.maxMonsterHP;
+        const baseHP = this.calculateMonsterHP();
+        // 確保怪物血量不超過題目總數 (針對剩餘單字不足 10 的普通關卡)
+        this.monsterHP = Math.min(baseHP, this.vocabularyList.length);
+        this.maxMonsterHP = this.monsterHP;
 
         // 重置答題統計
         this.correctAnswers = 0;
@@ -137,35 +127,26 @@ class GameState {
 
     // 計算怪物 HP
     calculateMonsterHP() {
-        if (this.isBigBoss) return CONFIG.MONSTER_HP_BIG_BOSS;
-        // 普通關卡和小魔王都是 10 HP (或根據題目數量? 需求說是 10 HP)
-        // 注意: Boss 關卡題目是隨機選 10 題，所以也是 10 HP。
-        return CONFIG.MONSTER_HP_BOSS;
+        if (this.isBigBoss) return 20; // 大魔王 20 HP
+        return 10; // 普通怪物 與 小魔王 都是 10 HP
     }
 
     // 獲取關卡詞彙列表
     getStageVocabulary(config) {
+        // config.start 和 config.end 現在已經由 generateStageMap 明確計算好
         if (config.type === 'NORMAL') {
             return this.allVocabulary.slice(config.start, config.end);
         } else if (config.type === 'BOSS') {
-            // 小魔王: 從本次小週期(通常是前3關)的範圍隨機選 10 題
-            // 範圍結束是 config.rangeEnd。範圍開始呢？
-            // 為了簡化，小魔王考的是 "最近的一批"。
-            // 假設每批 30 字。如果是最後一批可能只有 17 字 (31-47)。
-            // 我們可以簡單地拿 rangeEnd 往前推 30 個字 (或是全部，如果不到30)。
-            // 或者更精確地：小魔王涵蓋 "未被上一個小魔王涵蓋" 的區域... 這需要狀態記憶。
-            // 簡單做法：rangeEnd 往回推，直到上一個 Boss 的 rangeEnd 嗎? 不容易知道。
-            // 採用需求暗示： "31-47" -> 17 個字。
-            // 我們可以拿 rangeEnd 往前推 30 個字作為池子。
-            const poolEnd = config.rangeEnd;
-            const poolStart = Math.max(0, poolEnd - (CONFIG.NORMAL_STAGES_PER_BOSS * CONFIG.QUESTIONS_PER_STAGE));
-            const pool = this.allVocabulary.slice(poolStart, poolEnd);
-            return this.shuffleArray([...pool]).slice(0, CONFIG.BOSS_QUESTIONS);
-
+            // 小魔王: 雖然範圍是 config.start 到 config.end (例如 30 個字)，
+            // 但怪物只有 10 HP。不過題庫是這 30 個字。
+            // 我們返回全部這 30 個字作為 "潛在題庫"。
+            // generateQuestion 會從這裡面挑。
+            const pool = this.allVocabulary.slice(config.start, config.end);
+            return this.shuffleArray([...pool]);
         } else if (config.type === 'BIG_BOSS') {
-            // 大魔王: 全部隨機選 20 題
-            const pool = this.allVocabulary.slice(0, config.rangeEnd);
-            return this.shuffleArray([...pool]).slice(0, CONFIG.BIG_BOSS_QUESTIONS);
+            // 大魔王: 全部單字
+            const pool = this.allVocabulary.slice(config.start, config.end);
+            return this.shuffleArray([...pool]);
         }
         return [];
     }
@@ -179,6 +160,11 @@ class GameState {
         } else if (this.retryQuestions.length > 0) {
             const index = Math.floor(Math.random() * this.retryQuestions.length);
             questionWord = this.retryQuestions.splice(index, 1)[0];
+        } else if (this.monsterHP > 0 && this.hearts > 0) {
+            // 題目耗盡但戰鬥未結束：重置題庫繼續出題 (Endless Mode)
+            // 需求: "若都沒題目了，則重覆出題庫的題目"
+            this.pendingQuestions = this.shuffleArray([...this.vocabularyList]);
+            return this.generateQuestion();
         } else {
             return null;
         }
@@ -247,10 +233,10 @@ class GameState {
         this.updateStatus(isCorrect);
     }
 
-    // 下一題 (未變更)
+    // 下一題
     nextQuestion() {
         this.currentQuestionIndex++;
-        return this.generateQuestion();
+        // return this.generateQuestion(); // FIX: Do not generate here, app.js calls generateQuestion via showNextQuestion
     }
 
     // 檢查關卡是否結束 (未變更)

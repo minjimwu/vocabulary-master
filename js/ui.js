@@ -81,8 +81,11 @@ class UI {
     this.app.innerHTML = `
       <div class="game-screen">
         <div class="game-header">
-          <h2>${gameState.category} - 關卡 ${gameState.stageNumber}</h2>
-          <div class="stage-type">${titlePrefix}</div>
+          <div class="header-left">
+            <h2>${gameState.category} - 關卡 ${gameState.stageNumber}</h2>
+            <div class="stage-type">${titlePrefix}</div>
+          </div>
+          <button class="escape-btn" onclick="app.escapeStage()">🏃 逃跑</button>
         </div>
         
         <div class="monster-container">
@@ -258,15 +261,25 @@ class UI {
     setTimeout(() => {
       overlay.classList.add('fade-out');
       setTimeout(() => {
-        overlay.remove();
         if (onComplete) onComplete();
       }, 1000);
     }, 4000);
   }
 
   // 渲染關卡結果
-  renderStageResult(isVictory, isBoss, category, stageNumber, stars = 0, stats = null) {
+  renderStageResult(isVictory, isBoss, category, stageNumber, stars = 0, stats = null, gameState = null) {
     const statsText = stats ? `答對 ${stats.correctAnswers} / ${stats.totalQuestions} 題` : '';
+
+    let message = '';
+    if (isVictory) {
+      message = isBoss ? '恭喜擊敗魔王!' : '成功完成關卡!';
+    } else {
+      if (gameState && gameState.hearts <= 0) {
+        message = '愛心耗盡，請再試一次!';
+      } else {
+        message = '彈藥用盡，怪物逃跑了!';
+      }
+    }
 
     this.app.innerHTML = `
       <div class="result-screen ${isVictory ? 'victory' : 'defeat'}">
@@ -275,11 +288,7 @@ class UI {
           
           <p class="stats-text">${statsText}</p>
           
-          <p class="result-message">
-            ${isVictory
-        ? (isBoss ? '恭喜擊敗魔王!' : '成功完成關卡!')
-        : '愛心耗盡，請再試一次!'}
-          </p>
+          <p class="result-message">${message}</p>
           <div class="result-buttons">
             ${isVictory ? `
               <button class="next-btn" onclick="app.nextStage()">下一關</button>
