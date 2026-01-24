@@ -133,8 +133,14 @@ class UI {
     const weaponsEl = document.getElementById('weapons');
     const counterEl = document.getElementById('question-counter');
 
-    weaknessEl.textContent = question.weakness;
-    modeHintEl.textContent = question.mode === 'zh-to-en' ? '選擇英文武器' : '選擇中文武器';
+    // 使用 innerHTML 以支持填空題的 HTML 標籤
+    weaknessEl.innerHTML = question.weakness;
+    // 根據題型設置提示文字
+    if (question.mode === 'fill-in-blank') {
+      modeHintEl.textContent = '選擇正確的字母填入空格';
+    } else {
+      modeHintEl.textContent = question.mode === 'zh-to-en' ? '選擇英文武器' : '選擇中文武器';
+    }
     counterEl.textContent = `題目 ${questionNumber}`;
 
     weaponsEl.innerHTML = question.options.map((option, index) => `

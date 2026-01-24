@@ -522,6 +522,7 @@ body {
     font-size: 16px;
   }
 }
+
 /* 答錯對話框模態視窗 */
 .modal-overlay {
   position: fixed;
@@ -590,13 +591,25 @@ body {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideIn {
-  from { transform: translateY(-50px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* 愛心顯示 */
@@ -610,7 +623,7 @@ body {
 
 .heart {
   color: #ef4444;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
   transition: transform 0.3s ease;
 }
 
@@ -739,13 +752,25 @@ body {
 }
 
 @keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-20px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-20px);
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 /* 大魔王關卡特殊樣式 */
@@ -764,7 +789,47 @@ body {
 }
 
 @keyframes pulse-border {
-  0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
-  70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px rgba(220, 38, 38, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
+  }
+}
+
+/* 填空題樣式 */
+.masked-word {
+  font-size: 56px;
+  font-weight: bold;
+  letter-spacing: 4px;
+  color: #fbbf24;
+  text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
+  display: block;
+  margin-bottom: 15px;
+  font-family: 'Courier New', monospace;
+}
+
+.chinese-hint {
+  font-size: 28px;
+  color: #ffffff;
+  font-weight: 600;
+  display: block;
+  margin-top: 10px;
+  text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6);
+  background: rgba(167, 139, 250, 0.3);
+  padding: 8px 16px;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+/* 填空題的武器按鈕（字母選項）樣式調整 */
+.weakness-text:has(.masked-word)~.weapons-container .weapon-btn {
+  font-family: 'Courier New', monospace;
+  font-size: 24px;
+  letter-spacing: 2px;
 }
