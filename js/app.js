@@ -91,6 +91,11 @@ class App {
             this.gameState.maxMonsterHP
         );
         this.ui.renderQuestion(question, currentIndex, totalQuestions);
+
+        // 如果是 英文 -> 中文 模式 (顯示的是英文單字)，則朗讀該單字
+        if (question.mode === 'en-to-zh') {
+            this.audio.speak(question.correctWord.word);
+        }
     }
 
     // 選擇武器(答題)
