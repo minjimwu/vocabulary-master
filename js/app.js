@@ -11,6 +11,7 @@ class App {
         this.stageMap = []; // 存儲當前分類的關卡映射
         this.timer = null; // 計時器 Interval
         this.timeLeft = 0;
+        this.phoneticCorrect = true; // 追蹤拼音題是否一直正確
     }
 
     // 初始化應用
@@ -67,6 +68,7 @@ class App {
 
     // 確認開始戰鬥
     confirmStartStage() {
+        this.phoneticCorrect = true; // 重置
         this.ui.renderGameScreen(this.gameState);
         this.showNextQuestion();
     }
@@ -101,7 +103,7 @@ class App {
         this.ui.renderQuestion(question, currentIndex, totalQuestions);
 
         // 如果是 英文 -> 中文 模式 (顯示的是英文單字)，則朗讀該單字
-        if (question.mode === 'en-to-zh') {
+        if (question.mode === 'en-to-zh' || question.mode === 'phonetic-spelling') {
             this.audio.speak(question.correctWord.word);
         }
 
@@ -347,6 +349,81 @@ class App {
         }
     }
 
+
+    // 選擇拼音字母（拼音題專用）
+    selectPhoneticLetter(letter) {
+        const currentQ = this.gameState.currentQuestion;
+
+        // 紀錄選擇
+        currentQ.selectedLetters.push(letter);
+
+        // 檢查當前位元是否正確
+        if (letter.toLowerCase() !== currentQ.targetWord[currentQ.currentIndex].toLowerCase()) {
+            this.phoneticCorrect = false;
+        }
+
+        currentQ.currentIndex++;
+
+        if (currentQ.currentIndex < currentQ.targetWord.length) {
+            // 尚未結束：刷新選項並更新 UI
+            currentQ.options = this.gameState.getPhoneticOptions(currentQ.targetWord, currentQ.currentIndex);
+            this.ui.updatePhoneticSpelling(currentQ);
+        } else {
+            // 拼寫完成：檢查最終結果
+            this.stopTimer();
+            // 禁用按鈕
+            document.querySelectorAll('.weapon-btn').forEach(btn => btn.disabled = true);
+
+            setTimeout(() => {
+                if (this.phoneticCorrect) {
+                    // 答對
+                    this.audio.playHitSound();
+                    this.audio.speak(currentQ.correctWord.word);
+                    this.ui.animateHit();
+                    this.ui.animateSwordAttack();
+                    this.gameState.correctAnswers++;
+                    this.gameState.updateStatus(true);
+                    this.ui.updateStatus(
+                        this.gameState.hearts,
+                        this.gameState.maxHearts,
+                        this.gameState.monsterHP,
+                        this.gameState.maxMonsterHP
+                    );
+
+                    if (this.gameState.checkStageEnd()) {
+                        setTimeout(() => this.endStage(true), CONFIG.DELAYS.STAGE_END);
+                        return;
+                    }
+
+                    setTimeout(() => {
+                        this.gameState.nextQuestion();
+                        this.showNextQuestion();
+                    }, CONFIG.DELAYS.NEXT_QUESTION);
+                } else {
+                    // 答錯
+                    this.audio.playMissSound();
+                    this.gameState.retryQuestions.push(currentQ.correctWord);
+                    this.gameState.updateStatus(false);
+                    this.ui.updateStatus(
+                        this.gameState.hearts,
+                        this.gameState.maxHearts,
+                        this.gameState.monsterHP,
+                        this.gameState.maxMonsterHP
+                    );
+
+                    this.audio.speak(currentQ.correctWord.word);
+                    this.ui.showWrongAnswerDialog(currentQ, () => {
+                        if (this.gameState.hearts <= 0) {
+                            this.endStage(false);
+                        } else {
+                            this.gameState.nextQuestion();
+                            this.showNextQuestion();
+                        }
+                    });
+                }
+            }, 300);
+        }
+    }
 
     // 結束關卡
     endStage(isVictory) {

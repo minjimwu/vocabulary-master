@@ -408,7 +408,11 @@ body {
   align-items: center;
   z-index: 10;
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  pointer-events: none;
+  /* 移除 pointer-events: none, 以便點擊耳朵重聽 */
+}
+
+.magnifier .weakness-text {
+  cursor: pointer;
 }
 
 .magnifier::after {
@@ -1152,6 +1156,7 @@ body {
   color: #cbd5e1;
   margin-top: 5px;
 }
+
 /* 關卡預覽畫面 */
 .stage-preview {
   text-align: center;
@@ -1191,10 +1196,12 @@ body {
 .word-list-container::-webkit-scrollbar {
   width: 8px;
 }
+
 .word-list-container::-webkit-scrollbar-track {
   background: rgba(0, 0, 0, 0.1);
   border-radius: 4px;
 }
+
 .word-list-container::-webkit-scrollbar-thumb {
   background: rgba(251, 191, 36, 0.4);
   border-radius: 4px;
@@ -1245,4 +1252,13 @@ body {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
   filter: brightness(1.1);
+}
+
+/* 拼音題樣式 */
+.phonetic-container {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  align-items: center;
+  width: 100%;
 }

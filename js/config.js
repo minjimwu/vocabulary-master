@@ -22,9 +22,10 @@ const CONFIG = {
 
     // 題型出現權重 (0 ~ 1)
     QUESTION_WEIGHTS: {
-        WORD_ASSEMBLY: 0.3,
-        FILL_IN_BLANK: 0.3,
-        TRANSLATION: 0.4    // 剩餘 50% 由 EN-to-ZH 與 ZH-to-EN 平分
+        WORD_ASSEMBLY: 0.2,
+        FILL_IN_BLANK: 0.2,
+        PHONETIC_SPELLING: 0.3, // 新增拼音題
+        TRANSLATION: 0.3
     },
 
     // 倒數計時設定 (秒)
@@ -51,6 +52,9 @@ const CONFIG = {
         },
         WORD_ASSEMBLY: {
             partsCount: 3        // 拼字題切割份數
+        },
+        PHONETIC_SPELLING: {
+            optionCount: 3       // 拼音題每次提供的字母數量
         }
     }
 };

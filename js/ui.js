@@ -161,7 +161,15 @@ class UI {
     }
     counterEl.textContent = `題目 ${questionNumber}`;
 
-    // 隨機定位放大鏡
+    // 設置發音重聽功能 (點擊放大鏡內的圖標即可重聽)
+    weaknessEl.style.cursor = 'pointer';
+    weaknessEl.onclick = () => {
+      // 拼音題或英文出題模式都允許點擊重聽
+      if (question.mode === 'phonetic-spelling' || question.mode === 'en-to-zh') {
+        app.audio.speak(question.correctWord.word);
+      }
+    };
+
     this.randomizeMagnifierPosition();
 
     // 單字組成題的特殊渲染
@@ -175,6 +183,26 @@ class UI {
           <div class="remaining-options">
             ${question.remainingOptions.map(option => `
               <button class="weapon-btn word-part-btn" onclick="app.selectWordPart('${option.replace(/'/g, "\\'")}')">
+                ${option}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    } else if (question.mode === 'phonetic-spelling') {
+      // 拼音題渲染
+      weaponsEl.innerHTML = `
+        <div class="phonetic-container">
+          <div class="selected-parts" id="phonetic-slots">
+            ${Array(question.targetWord.length).fill(0).map((_, i) => {
+        const char = question.selectedLetters[i] || '?';
+        const isFilled = i < question.selectedLetters.length;
+        return `<span class="word-part ${isFilled ? 'selected' : 'empty'}">${char}</span>`;
+      }).join('')}
+          </div>
+          <div class="remaining-options">
+            ${question.options.map(option => `
+              <button class="weapon-btn" onclick="app.selectPhoneticLetter('${option}')">
                 ${option}
               </button>
             `).join('')}
@@ -250,6 +278,32 @@ class UI {
           ${option}
         </button>
       `).join('');
+    }
+  }
+
+  // 更新拼音題顯示
+  updatePhoneticSpelling(question) {
+    const slotsEl = document.getElementById('phonetic-slots');
+    const weaponsEl = document.getElementById('weapons');
+    if (!slotsEl || !weaponsEl) return;
+
+    // 更新槽位
+    slotsEl.innerHTML = Array(question.targetWord.length).fill(0).map((_, i) => {
+      const char = question.selectedLetters[i] || '?';
+      const isFilled = i < question.selectedLetters.length;
+      return `<span class="word-part ${isFilled ? 'selected' : 'empty'}">${char}</span>`;
+    }).join('');
+
+    // 更新選項佈建
+    const optionsHtml = question.options.map(option => `
+      <button class="weapon-btn" onclick="app.selectPhoneticLetter('${option}')">
+        ${option}
+      </button>
+    `).join('');
+
+    const remainingOptionsEl = weaponsEl.querySelector('.remaining-options');
+    if (remainingOptionsEl) {
+      remainingOptionsEl.innerHTML = optionsHtml;
     }
   }
 
