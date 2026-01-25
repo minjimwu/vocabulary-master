@@ -155,6 +155,28 @@ class App {
         }
     }
 
+    // 取消選擇單字部分
+    deselectWordPart(index) {
+        const currentQ = this.gameState.currentQuestion;
+
+        // 確保 index 有效
+        if (index < 0 || index >= currentQ.selectedParts.length) return;
+
+        // 移除該部分
+        const removedPart = currentQ.selectedParts.splice(index, 1)[0];
+
+        // 加回剩餘選項
+        currentQ.remainingOptions.push(removedPart);
+
+        // 更新 UI
+        this.ui.updateWordAssembly(currentQ);
+
+        // 恢復所有按鈕狀態 (以防之前因為選滿而被禁用)
+        document.querySelectorAll('.weapon-btn').forEach(btn => {
+            btn.disabled = false;
+        });
+    }
+
     // 選擇單字部分（單字組成題專用）
     selectWordPart(part) {
         const currentQ = this.gameState.currentQuestion;

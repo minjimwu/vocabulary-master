@@ -170,7 +170,7 @@ class UI {
       weaponsEl.innerHTML = `
         <div class="word-assembly-container">
           <div class="selected-parts" id="selected-parts">
-            ${question.selectedParts.map(part => `<span class="word-part selected">${part}</span>`).join('')}
+            ${question.selectedParts.map((part, index) => `<span class="word-part selected" onclick="app.deselectWordPart(${index})" style="cursor: pointer;">${part}</span>`).join('')}
             ${Array(3 - question.selectedParts.length).fill('<span class="word-part empty">?</span>').join('')}
           </div>
           <div class="remaining-options">
@@ -238,7 +238,7 @@ class UI {
     if (!selectedPartsEl) return;
 
     selectedPartsEl.innerHTML = `
-      ${question.selectedParts.map(part => `<span class="word-part selected">${part}</span>`).join('')}
+      ${question.selectedParts.map((part, index) => `<span class="word-part selected" onclick="app.deselectWordPart(${index})" style="cursor: pointer;">${part}</span>`).join('')}
       ${Array(3 - question.selectedParts.length).fill('<span class="word-part empty">?</span>').join('')}
     `;
 

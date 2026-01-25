@@ -14,6 +14,15 @@ const CONFIG = {
     BOSS_QUESTIONS: 10, // 小魔王題目數量
     BIG_BOSS_QUESTIONS: 20, // 大魔王題目數量
 
+    // 遊戲玩法參數
+    GAME_PARAMS: {
+        FILL_IN_BLANK: {
+            optionCount: 6,      // 選項數量
+            maxOptionLength: 3,  // 選項最大長度 (字母數)
+            minOptionLength: 1   // 選項最小長度
+        }
+    },
+
     // 怪物圖片路徑
     MONSTER_IMAGES: {
         '幼蟲期': {

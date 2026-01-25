@@ -205,13 +205,17 @@ class GameState {
 
     // 生成填空題
     generateFillInBlankQuestion(correctWord) {
+        const { optionCount, maxOptionLength, minOptionLength } = CONFIG.GAME_PARAMS.FILL_IN_BLANK;
         const word = correctWord.word;
         const len = word.length;
 
-        // 決定去除的長度：1 到 4 個字母，且不能超過 len - 1 (不全空)
-        const maxRemove = Math.min(4, len - 1); // 至少留 1 個字，最多去 4 個
-        if (maxRemove < 1) { // 應該不會發生，因為前面有檢查 length >= 2
-            // fallback
+        // 決定去除的長度：
+        // 1. 至少留 1 個字 (len - 1)
+        // 2. 最多去 4 個 (Math.min(4, ...))
+        // 3. 不能超過設定的最大選項長度 (maxOptionLength)
+        const maxRemove = Math.min(4, len - 1, maxOptionLength);
+
+        if (maxRemove < 1) {
             return this.generateQuestion();
         }
 
@@ -227,35 +231,41 @@ class GameState {
         const mask = '_'.repeat(removeCount);
         const maskedWord = word.substring(0, startIndex) + mask + word.substring(startIndex + removeCount);
 
-        // 生成錯誤選項 (2個)
-        // 選項邏輯：
-        // 1. 可以是其他單字的隨機子串 (相同長度)
-        // 2. 如果找不到，就隨機生成字母
+        // 生成錯誤選項
+        const wrongOptionCount = optionCount - 1;
         const wrongOptions = [];
         let attempts = 0;
 
-        while (wrongOptions.length < 2 && attempts < 50) {
+        while (wrongOptions.length < wrongOptionCount && attempts < 100) {
             attempts++;
-            // 隨機挑個單字
             const randomWordObj = this.allVocabulary[Math.floor(Math.random() * this.allVocabulary.length)];
             const otherWord = randomWordObj.word;
 
+            // 確保單字夠長
             if (otherWord.length < removeCount) continue;
 
             const start = Math.floor(Math.random() * (otherWord.length - removeCount + 1));
             const part = otherWord.substring(start, start + removeCount);
 
-            // 不能跟正確答案一樣，也不能跟已有選項一樣
+            // 檢查長度限制
+            if (part.length > maxOptionLength) continue;
+
             if (part !== extractedPart && !wrongOptions.includes(part)) {
                 wrongOptions.push(part);
             }
         }
 
-        // 如果還是湊不滿 (極端情況)，用隨機字母補
-        while (wrongOptions.length < 2) {
+        // 用隨機字母補足
+        while (wrongOptions.length < wrongOptionCount) {
             let randomStr = '';
             const chars = 'abcdefghijklmnopqrstuvwxyz';
-            for (let k = 0; k < removeCount; k++) {
+            // 隨機長度 (minOptionLength ~ removeCount, 但不超過 maxOptionLength)
+            // 其實這裡應該跟 extractedPart 長度一致比較難猜? 還是隨機?
+            // 需求是 "每個最多 3 個字母"，且題目是填空，通常選項長度該等於空格長度 (removeCount)
+            // 讓我們鎖定長度為 removeCount，因為 removeCount 已經被限制在 maxOptionLength 內了
+            const targetLen = removeCount;
+
+            for (let k = 0; k < targetLen; k++) {
                 randomStr += chars.charAt(Math.floor(Math.random() * chars.length));
             }
             if (randomStr !== extractedPart && !wrongOptions.includes(randomStr)) {
@@ -269,7 +279,7 @@ class GameState {
             mode: 'fill-in-blank',
             // weakness 只顯示中文提示
             weakness: `${correctWord.chinese}`,
-            maskedWord: maskedWord, // 新增 maskedWord 屬性
+            maskedWord: maskedWord,
             options: options,
             answer: extractedPart,
             correctWord: correctWord
