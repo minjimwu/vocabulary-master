@@ -112,6 +112,7 @@ class App {
             // 答對
             this.audio.playHitSound();
             this.ui.animateHit();
+            this.ui.animateSwordAttack();
             this.gameState.updateStatus(true);
             this.ui.updateStatus(
                 this.gameState.hearts,
@@ -208,6 +209,7 @@ class App {
                     // 答對
                     this.audio.playHitSound();
                     this.ui.animateHit();
+                    this.ui.animateSwordAttack();
                     this.gameState.correctAnswers++;
                     this.gameState.updateStatus(true);
                     this.ui.updateStatus(

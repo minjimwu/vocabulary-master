@@ -17,9 +17,9 @@ const CONFIG = {
     // 遊戲玩法參數
     GAME_PARAMS: {
         FILL_IN_BLANK: {
-            optionCount: 6,      // 選項數量
+            optionCount: 3,      // 選項數量
             maxOptionLength: 3,  // 選項最大長度 (字母數)
-            minOptionLength: 1   // 選項最小長度
+            minOptionLength: 2   // 選項最小長度
         }
     },
 
