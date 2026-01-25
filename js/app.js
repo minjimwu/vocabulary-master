@@ -61,6 +61,12 @@ class App {
         this.currentCategory = category;
         // 傳遞 config 給 game state
         this.gameState.startStage(category, stageConfig, this.vocabularyData);
+        // 顯示預覽而非直接開始
+        this.ui.renderStagePreview(this.gameState);
+    }
+
+    // 確認開始戰鬥
+    confirmStartStage() {
         this.ui.renderGameScreen(this.gameState);
         this.showNextQuestion();
     }

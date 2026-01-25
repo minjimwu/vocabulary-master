@@ -102,14 +102,14 @@ class UI {
             <div class="hearts-container" id="hearts-container">
             ${heartsHtml}
           </div>
-          <div class="timer-container" id="timer-container" style="display: none;">
-            <span class="timer-icon">⏳</span>
-            <span class="timer-text" id="timer-text">0</span>
-          </div>
           <button class="escape-btn" onclick="app.escapeStage()">🏃 逃跑</button>
         </div>
         
         <div class="monster-container" id="monster-container">
+          <div class="timer-container" id="timer-container" style="display: none;">
+            <span class="timer-icon">⏳</span>
+            <span class="timer-text" id="timer-text">0</span>
+          </div>
           <div class="monster-emoji ${gameState.isBigBoss ? 'big-boss' : (gameState.isBoss ? 'boss' : 'normal')}" id="monster">
             ${monsterEmoji}
           </div>
@@ -420,15 +420,24 @@ class UI {
             <div class="modal-content">
                 <div class="modal-title">😵‍💫 MISS! 🤕</div>
                 <div class="modal-answer-label">正確答案是</div>
-                <div class="modal-answer-text">
-                    ${question.correctWord.word}<br>
-                    ${question.correctWord.chinese}
+                <div class="modal-answer-text" id="modal-answer-replay" style="cursor: pointer;">
+                    <div class="word-pronounce-container">
+                        <span class="word">${question.correctWord.word}</span>
+                    </div>
+                    <div class="chinese">${question.correctWord.chinese}</div>
                 </div>
                 <button class="learn-btn" id="learn-btn" disabled>我領悟了弱點 (5)</button>
             </div>
         `;
 
     this.app.appendChild(overlay);
+
+    const replayArea = overlay.querySelector('#modal-answer-replay');
+    replayArea.onclick = () => {
+      if (window.app && window.app.audio) {
+        window.app.audio.speak(question.correctWord.word);
+      }
+    };
 
     const btn = overlay.querySelector('#learn-btn');
 
@@ -571,6 +580,31 @@ class UI {
           </div>
         </div>
         <button class="back-btn" onclick="ui.renderCategorySelection()">返回</button>
+      </div>
+    `;
+  }
+
+  // 渲染關卡單字預覽
+  renderStagePreview(gameState) {
+    const wordList = gameState.vocabularyList;
+    const title = gameState.isBigBoss ? '🐉 大魔王 挑戰準備' : (gameState.isBoss ? '👑 小魔王 挑戰準備' : `第 ${gameState.stageNumber} 關 準備`);
+
+    this.app.innerHTML = `
+      <div class="stage-preview">
+        <h1>${title}</h1>
+        <p class="preview-hint">複習一下本關單字：</p>
+        <div class="word-list-container">
+          ${wordList.map(item => `
+            <div class="word-item" onclick="app.audio.speak('${item.word.replace(/'/g, "\\'")}')" style="cursor: pointer;">
+              <span class="en">${item.word}</span>
+              <span class="zh">${item.chinese}</span>
+            </div>
+          `).join('')}
+        </div>
+        <div class="preview-actions">
+          <button class="confirm-start-btn" onclick="app.confirmStartStage()">開始戰鬥！</button>
+          <button class="back-btn" onclick="app.backToStageSelection()">返回</button>
+        </div>
       </div>
     `;
   }
