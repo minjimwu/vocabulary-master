@@ -267,8 +267,9 @@ class GameState {
 
         this.currentQuestion = {
             mode: 'fill-in-blank',
-            // weakness 顯示 挖空的單字 + 中文提示 (用 HTML 換行)
-            weakness: `<span class="masked-word">${maskedWord}</span><span class="chinese-hint">${correctWord.chinese}</span>`,
+            // weakness 只顯示中文提示
+            weakness: `${correctWord.chinese}`,
+            maskedWord: maskedWord, // 新增 maskedWord 屬性
             options: options,
             answer: extractedPart,
             correctWord: correctWord

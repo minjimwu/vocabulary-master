@@ -217,28 +217,32 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 220px;
-  /* 預留空間 */
+  min-height: 450px;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
+  overflow: hidden;
 }
 
 /* 怪物 Emoji 樣式 */
 .monster-emoji {
-  font-size: 100px;
+  font-size: 240px;
   line-height: 1;
   filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
   transition: all 0.3s ease;
   cursor: default;
   user-select: none;
+  z-index: 1;
 }
 
 .monster-emoji.boss {
-  font-size: 130px;
+  font-size: 380px;
   filter: drop-shadow(0 10px 20px rgba(251, 191, 36, 0.5));
   animation: float 3s ease-in-out infinite;
 }
 
 .monster-emoji.big-boss {
-  font-size: 160px;
+  font-size: 440px;
   filter: drop-shadow(0 10px 30px rgba(220, 38, 38, 0.6));
   animation: pulse-scale 2s infinite ease-in-out;
 }
@@ -346,6 +350,66 @@ body {
   font-size: 16px;
   color: #a78bfa;
   margin-top: 10px;
+}
+
+/* 放大鏡樣式 */
+.magnifier {
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  border: 8px solid #cbd5e1;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.5),
+    inset 0 0 20px rgba(255, 255, 255, 0.4);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.magnifier::after {
+  content: '';
+  position: absolute;
+  bottom: -40px;
+  right: -20px;
+  width: 20px;
+  height: 80px;
+  background: #94a3b8;
+  border-radius: 10px;
+  transform: rotate(-45deg);
+  box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.magnifier .weakness-label {
+  font-size: 14px;
+  color: #fbbf24;
+  margin-bottom: 5px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.magnifier .weakness-text {
+  font-size: 28px;
+  font-weight: bold;
+  color: #fff;
+  text-align: center;
+  margin: 0;
+  padding: 0 20px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  word-break: break-word;
+  line-height: 1.2;
+}
+
+.magnifier .weakness-text .chinese-hint {
+  display: block;
+  font-size: 16px;
+  color: #cbd5e1;
+  margin-top: 4px;
 }
 
 /* 武器選項 */
@@ -700,7 +764,7 @@ body {
 /* 怪物血條樣式 */
 .monster-stats {
   max-width: 400px;
-  margin: 20px auto 20px;
+  margin: 50px auto 0px;
   width: 100%;
 }
 
@@ -869,14 +933,15 @@ body {
 
 /* 填空題樣式 */
 .masked-word {
-  font-size: 56px;
+  font-size: 28px;
   font-weight: bold;
   letter-spacing: 4px;
-  color: #fbbf24;
+  color: #ffffff;
   text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
   display: block;
   margin-bottom: 15px;
   font-family: 'Courier New', monospace;
+  text-align: center;
 }
 
 .chinese-hint {

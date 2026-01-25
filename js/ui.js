@@ -105,11 +105,15 @@ class UI {
           <button class="escape-btn" onclick="app.escapeStage()">🏃 逃跑</button>
         </div>
         
-        <div class="monster-container">
+        <div class="monster-container" id="monster-container">
           <div class="monster-emoji ${gameState.isBigBoss ? 'big-boss' : (gameState.isBoss ? 'boss' : 'normal')}" id="monster">
             ${monsterEmoji}
           </div>
           
+          <div class="magnifier" id="magnifier">
+            <div class="weakness-text" id="weakness"></div>
+          </div>
+
           <div class="monster-stats">
             <div class="monster-hp-container">
                 <div class="monster-hp-bar" id="monster-hp-bar" style="width: 100%"></div>
@@ -119,10 +123,8 @@ class UI {
         </div>
 
         <div class="battle-area">
-          <div class="weakness-display">
-            <div class="weakness-label">怪物弱點</div>
-            <div class="weakness-text" id="weakness"></div>
-            <div class="mode-hint" id="mode-hint"></div>
+          <div class="weakness-display" style="display: none;">
+            <div id="mode-hint"></div>
           </div>
 
           <div class="weapons-container" id="weapons">
@@ -160,6 +162,9 @@ class UI {
     }
     counterEl.textContent = `題目 ${questionNumber}`;
 
+    // 隨機定位放大鏡
+    this.randomizeMagnifierPosition();
+
     // 單字組成題的特殊渲染
     if (question.mode === 'word-assembly') {
       weaponsEl.innerHTML = `
@@ -175,6 +180,20 @@ class UI {
               </button>
             `).join('')}
           </div>
+        </div>
+      `;
+    } else if (question.mode === 'fill-in-blank') {
+      // 填空題特殊渲染 (Mask 顯示在上方)
+      weaponsEl.innerHTML = `
+        <div class="fill-in-blank-container">
+           <span class="masked-word">${question.maskedWord}</span>
+           <div class="options-container weapons-container" style="margin-top: 20px;">
+              ${question.options.map((option, index) => `
+                <button class="weapon-btn" onclick="app.selectWeapon('${option.replace(/'/g, "\\'")}')">
+                  ${option}
+                </button>
+              `).join('')}
+           </div>
         </div>
       `;
     } else {
@@ -233,6 +252,51 @@ class UI {
         </button>
       `).join('');
     }
+  }
+
+  // 隨機定位放大鏡
+  randomizeMagnifierPosition() {
+    // 使用 requestAnimationFrame 確保 DOM 已經渲染並可以獲取正確的尺寸
+    requestAnimationFrame(() => {
+      const container = document.getElementById('monster-container');
+      const magnifier = document.getElementById('magnifier');
+      const monster = document.getElementById('monster');
+      if (!container || !magnifier || !monster) return;
+
+      // 獲取怪物的邊界矩形 (相對於視口)
+      const monsterRect = monster.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+
+      // 計算怪物相對於容器的位置
+      const monsterLeft = monsterRect.left - containerRect.left;
+      const monsterTop = monsterRect.top - containerRect.top;
+      const monsterWidth = monsterRect.width;
+      const monsterHeight = monsterRect.height;
+
+      // 放大鏡尺寸
+      const magWidth = 180;
+      const magHeight = 180;
+
+      // 計算隨機位置：
+      // 目標是讓放大鏡的"中心"位於怪物的範圍內。
+      // 因此放大鏡的左上角位置應為：(怪物左邊界 + 隨機X) - (放大鏡寬度 / 2)
+
+      // 生成相對於怪物的隨機中心點 offset
+      // 為了不讓放大鏡完全偏離，我們可以限制隨機中心點在怪物的 20% ~ 80% 區域內
+      const randomCenterX = monsterLeft + (monsterWidth * (0.2 + Math.random() * 0.6));
+      const randomCenterY = monsterTop + (monsterHeight * (0.2 + Math.random() * 0.6));
+
+      // 計算放大鏡的 left/top
+      let finalLeft = randomCenterX - (magWidth / 2);
+      let finalTop = randomCenterY - (magHeight / 2);
+
+      // 邊界檢查 (確保不超出容器，雖然稍微超出也還好，只要能看到)
+      // const maxLeft = containerRect.width - magWidth;
+      // const maxTop = containerRect.height - magHeight;
+
+      magnifier.style.left = `${finalLeft}px`;
+      magnifier.style.top = `${finalTop}px`;
+    });
   }
 
   // 更新怪物 HP 條
