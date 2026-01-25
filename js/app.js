@@ -124,14 +124,14 @@ class App {
             );
 
             if (this.gameState.checkStageEnd()) {
-                setTimeout(() => this.endStage(true), 1000);
+                setTimeout(() => this.endStage(true), 2000);
                 return;
             }
 
             setTimeout(() => {
                 this.gameState.nextQuestion();
                 this.showNextQuestion();
-            }, 1000);
+            }, 2000);
 
         } else {
             // 答錯
@@ -224,14 +224,14 @@ class App {
                     );
 
                     if (this.gameState.checkStageEnd()) {
-                        setTimeout(() => this.endStage(true), 1000);
+                        setTimeout(() => this.endStage(true), 2000);
                         return;
                     }
 
                     setTimeout(() => {
                         this.gameState.nextQuestion();
                         this.showNextQuestion();
-                    }, 1000);
+                    }, 2000);
 
                 } else {
                     // 答錯
