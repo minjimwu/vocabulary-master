@@ -10,21 +10,21 @@ const CONFIG = {
     // 怪物血量配置
     MONSTER_HP: {
         NORMAL: 10,
-        BOSS: 10,
+        BOSS: 20,
         BIG_BOSS: 20
     },
 
     // 關卡生成配置
     STAGE_GENERATION: {
-        WORDS_PER_NORMAL_STAGE: 5,
+        WORDS_PER_NORMAL_STAGE: 3,
         NORMAL_STAGES_PER_BOSS: 2
     },
 
     // 題型出現權重 (0 ~ 1)
     QUESTION_WEIGHTS: {
-        WORD_ASSEMBLY: 0.25,
-        FILL_IN_BLANK: 0.25,
-        TRANSLATION: 0.5    // 剩餘 50% 由 EN-to-ZH 與 ZH-to-EN 平分
+        WORD_ASSEMBLY: 0.3,
+        FILL_IN_BLANK: 0.3,
+        TRANSLATION: 0.4    // 剩餘 50% 由 EN-to-ZH 與 ZH-to-EN 平分
     },
 
     // 倒數計時設定 (秒)

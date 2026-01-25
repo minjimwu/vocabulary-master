@@ -495,7 +495,7 @@ class UI {
 
   // 渲染關卡結果
   renderStageResult(isVictory, isBoss, category, stageNumber, stars = 0, stats = null, gameState = null) {
-    const statsText = stats ? `答對 ${stats.correctAnswers} / ${stats.totalQuestions} 題` : '';
+    const statsText = stats ? `答對 ${stats.correctCount} 題 / 共 ${stats.wordCount} 個單字` : '';
 
     let message = '';
     if (isVictory) {

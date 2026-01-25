@@ -119,8 +119,7 @@ class GameState {
 
         // 設置怪物 HP
         const baseHP = this.calculateMonsterHP();
-        // 確保怪物血量不超過題目總數 (針對剩餘單字不足 10 的普通關卡)
-        this.monsterHP = Math.min(baseHP, this.vocabularyList.length);
+        this.monsterHP = baseHP;
         this.maxMonsterHP = this.monsterHP;
 
         // 重置答題統計
@@ -385,18 +384,18 @@ class GameState {
         // return this.generateQuestion(); // FIX: Do not generate here, app.js calls generateQuestion via showNextQuestion
     }
 
-    // 檢查關卡是否結束 (未變更)
+    // 檢查關卡是否結束
     checkStageEnd() {
         if (this.hearts <= 0) return true;
         if (this.monsterHP <= 0) return true;
-        return this.pendingQuestions.length === 0 && this.retryQuestions.length === 0;
+        return false;
     }
 
     // 獲取答題統計
     getStats() {
         return {
-            correctAnswers: this.correctAnswers,
-            totalQuestions: this.questionsToClear
+            correctCount: this.correctAnswers,
+            wordCount: this.vocabularyList.length
         };
     }
 }
