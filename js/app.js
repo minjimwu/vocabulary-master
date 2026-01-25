@@ -141,17 +141,16 @@ class App {
                 this.gameState.maxMonsterHP
             );
 
-            if (this.gameState.hearts <= 0) {
-                setTimeout(() => this.endStage(false), 1000);
-                return;
-            }
-
             // 顯示答錯對話框
             // 播放正確單字的發音
             this.audio.speak(currentQ.correctWord.word);
             this.ui.showWrongAnswerDialog(currentQ, () => {
-                this.gameState.nextQuestion();
-                this.showNextQuestion();
+                if (this.gameState.hearts <= 0) {
+                    this.endStage(false);
+                } else {
+                    this.gameState.nextQuestion();
+                    this.showNextQuestion();
+                }
             });
         }
     }
@@ -218,17 +217,16 @@ class App {
                         this.gameState.maxMonsterHP
                     );
 
-                    if (this.gameState.hearts <= 0) {
-                        setTimeout(() => this.endStage(false), 1000);
-                        return;
-                    }
-
                     // 顯示答錯對話框
                     // 播放正確單字的發音
                     this.audio.speak(currentQ.correctWord.word);
                     this.ui.showWrongAnswerDialog(currentQ, () => {
-                        this.gameState.nextQuestion();
-                        this.showNextQuestion();
+                        if (this.gameState.hearts <= 0) {
+                            this.endStage(false);
+                        } else {
+                            this.gameState.nextQuestion();
+                            this.showNextQuestion();
+                        }
                     });
                 }
             }, 300);
