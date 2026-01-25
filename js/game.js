@@ -33,9 +33,12 @@ class GameState {
         let normalStageCountInGroup = 0;
 
         // 1. 循環生成普通關卡
+        const wordsPerStage = CONFIG.STAGE_GENERATION.WORDS_PER_NORMAL_STAGE;
+        const stagesPerBoss = CONFIG.STAGE_GENERATION.NORMAL_STAGES_PER_BOSS;
+
         while (currentWordIndex < totalWords) {
             const start = currentWordIndex;
-            const end = Math.min(start + 10, totalWords); // 強制 10 個單字一組
+            const end = Math.min(start + wordsPerStage, totalWords); // 使用參數控制每關單字數
 
             // 加入普通關卡
             stages.push({
@@ -49,8 +52,8 @@ class GameState {
             currentWordIndex = end;
             normalStageCountInGroup++;
 
-            // 每 3 關普通關卡後，插入一個小魔王
-            if (normalStageCountInGroup === 3) {
+            // 每 N 關普通關卡後，插入一個小魔王
+            if (normalStageCountInGroup === stagesPerBoss) {
                 stages.push({
                     index: stageCount++,
                     type: 'BOSS', // 小魔王
@@ -110,9 +113,9 @@ class GameState {
         this.pendingQuestions = [...this.vocabularyList];
         this.retryQuestions = [];
 
-        // 設置愛心: 固定 3 顆
-        this.hearts = 3;
-        this.maxHearts = 3;
+        // 設置愛心
+        this.hearts = CONFIG.PLAYER_HEARTS;
+        this.maxHearts = CONFIG.PLAYER_HEARTS;
 
         // 設置怪物 HP
         const baseHP = this.calculateMonsterHP();
@@ -127,8 +130,9 @@ class GameState {
 
     // 計算怪物 HP
     calculateMonsterHP() {
-        if (this.isBigBoss) return 20; // 大魔王 20 HP
-        return 10; // 普通怪物 與 小魔王 都是 10 HP
+        if (this.isBigBoss) return CONFIG.MONSTER_HP.BIG_BOSS;
+        if (this.isBoss) return CONFIG.MONSTER_HP.BOSS;
+        return CONFIG.MONSTER_HP.NORMAL;
     }
 
     // 獲取關卡詞彙列表
@@ -171,21 +175,22 @@ class GameState {
 
         const correctWord = questionWord;
 
-        // 隨機決定題型 (4種題型，各25%機率)
+        // 隨機決定題型
         const rand = Math.random();
+        const weights = CONFIG.QUESTION_WEIGHTS;
 
-        // 單字組成題 (25%)：需要至少3個字母
-        if (correctWord.word.length >= 3 && rand < 0.25) {
+        // 單字組成題：需要至少3個字母
+        if (correctWord.word.length >= 3 && rand < weights.WORD_ASSEMBLY) {
             return this.generateWordAssemblyQuestion(correctWord);
         }
 
-        // 填空題 (25%)：需要至少2個字母
-        if (correctWord.word.length >= 2 && rand < 0.5) {
+        // 填空題：需要至少2個字母
+        if (correctWord.word.length >= 2 && rand < (weights.WORD_ASSEMBLY + weights.FILL_IN_BLANK)) {
             return this.generateFillInBlankQuestion(correctWord);
         }
 
-        // 中文->英文 或 英文->中文 (各25%)
-        const mode = rand < 0.75 ? 'zh-to-en' : 'en-to-zh';
+        // 中文->英文 或 英文->中文 (各佔剩餘的一部分)
+        const mode = Math.random() < 0.5 ? 'zh-to-en' : 'en-to-zh';
         const wrongOptions = this.getWrongOptions(correctWord, 2);
         const options = this.shuffleArray([
             correctWord,
@@ -205,15 +210,15 @@ class GameState {
 
     // 生成填空題
     generateFillInBlankQuestion(correctWord) {
-        const { optionCount, maxOptionLength, minOptionLength } = CONFIG.GAME_PARAMS.FILL_IN_BLANK;
+        const { optionCount, maxRemoveChars, maxOptionLength, minOptionLength } = CONFIG.GAME_PARAMS.FILL_IN_BLANK;
         const word = correctWord.word;
         const len = word.length;
 
         // 決定去除的長度：
         // 1. 至少留 1 個字 (len - 1)
-        // 2. 最多去 4 個 (Math.min(4, ...))
+        // 2. 不超過設定的挖空上限 (maxRemoveChars)
         // 3. 不能超過設定的最大選項長度 (maxOptionLength)
-        const maxRemove = Math.min(4, len - 1, maxOptionLength);
+        const maxRemove = Math.min(len - 1, maxRemoveChars, maxOptionLength);
 
         if (maxRemove < 1) {
             return this.generateQuestion();
@@ -292,34 +297,24 @@ class GameState {
     generateWordAssemblyQuestion(correctWord) {
         const word = correctWord.word;
         const len = word.length;
+        const partsCount = CONFIG.GAME_PARAMS.WORD_ASSEMBLY.partsCount;
 
-        // 將單字分成3個部分
+        // 將單字切分成指定份數 (partsCount)
         let parts = [];
 
-        if (len === 3) {
-            // 3個字母：每個字母一個部分
-            parts = [word[0], word[1], word[2]];
-        } else if (len === 4) {
-            // 4個字母：1-2-1 或 1-1-2 或 2-1-1 隨機分配
-            const splitType = Math.floor(Math.random() * 3);
-            if (splitType === 0) {
-                parts = [word[0], word.substring(1, 3), word[3]];
-            } else if (splitType === 1) {
-                parts = [word[0], word[1], word.substring(2)];
-            } else {
-                parts = [word.substring(0, 2), word[2], word[3]];
-            }
+        if (len <= partsCount) {
+            // 長度不足或剛好：每個字母一個部分
+            parts = word.split('');
         } else {
-            // 5個字母以上：盡量平均分配
-            const part1Len = Math.floor(len / 3);
-            const part2Len = Math.floor((len - part1Len) / 2);
-            const part3Len = len - part1Len - part2Len;
-
-            parts = [
-                word.substring(0, part1Len),
-                word.substring(part1Len, part1Len + part2Len),
-                word.substring(part1Len + part2Len)
-            ];
+            // 盡量平均分配
+            let remainingLen = len;
+            let currentStart = 0;
+            for (let i = 0; i < partsCount; i++) {
+                const count = i === partsCount - 1 ? remainingLen : Math.floor(remainingLen / (partsCount - i));
+                parts.push(word.substring(currentStart, currentStart + count));
+                currentStart += count;
+                remainingLen -= count;
+            }
         }
 
         // 打亂順序
@@ -332,7 +327,8 @@ class GameState {
             answer: parts, // 正確順序
             correctWord: correctWord,
             selectedParts: [], // 玩家已選擇的部分
-            remainingOptions: [...shuffledParts] // 剩餘可選的部分
+            remainingOptions: [...shuffledParts], // 剩餘可選的部分
+            partsCount: partsCount // 保存分割份數供 UI 參考
         };
 
         return this.currentQuestion;

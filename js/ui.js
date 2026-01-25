@@ -141,11 +141,6 @@ class UI {
     `;
   }
 
-  // 獲取怪物圖片路徑
-  getMonsterImage(category, isBoss) {
-    const images = CONFIG.MONSTER_IMAGES[category];
-    return isBoss ? images.boss : images.normal;
-  }
 
   // 渲染題目
   renderQuestion(question, questionNumber, totalQuestions) {
@@ -175,7 +170,7 @@ class UI {
         <div class="word-assembly-container">
           <div class="selected-parts" id="selected-parts">
             ${question.selectedParts.map((part, index) => `<span class="word-part selected" onclick="app.deselectWordPart(${index})" style="cursor: pointer;">${part}</span>`).join('')}
-            ${Array(3 - question.selectedParts.length).fill('<span class="word-part empty">?</span>').join('')}
+            ${Array((question.partsCount || 3) - question.selectedParts.length).fill('<span class="word-part empty">?</span>').join('')}
           </div>
           <div class="remaining-options">
             ${question.remainingOptions.map(option => `
@@ -243,7 +238,7 @@ class UI {
 
     selectedPartsEl.innerHTML = `
       ${question.selectedParts.map((part, index) => `<span class="word-part selected" onclick="app.deselectWordPart(${index})" style="cursor: pointer;">${part}</span>`).join('')}
-      ${Array(3 - question.selectedParts.length).fill('<span class="word-part empty">?</span>').join('')}
+      ${Array((question.partsCount || 3) - question.selectedParts.length).fill('<span class="word-part empty">?</span>').join('')}
     `;
 
     // 更新剩餘選項
@@ -441,8 +436,8 @@ class UI {
 
     const btn = overlay.querySelector('#learn-btn');
 
-    // 強制倒數 5 秒
-    let countdown = 5;
+    // 強制倒數
+    let countdown = CONFIG.DELAYS.WRONG_ANSWER_LOCK;
     const intervalId = setInterval(() => {
       countdown--;
       if (countdown > 0) {
@@ -544,7 +539,7 @@ class UI {
       '蝶舞期': '🦋'
     };
 
-    const categories = Object.keys(CONFIG.MONSTER_IMAGES);
+    const categories = Object.keys(app.vocabularyData || {});
 
     let buttonsHtml = categories.map(category => {
       const icon = icons[category] || '❓';

@@ -127,7 +127,7 @@ class App {
 
             this.timer = setInterval(() => {
                 this.timeLeft--;
-                const isUrgent = this.timeLeft <= 5;
+                const isUrgent = this.timeLeft <= CONFIG.TIMER.URGENT_THRESHOLD;
                 this.ui.updateTimer(this.timeLeft, isUrgent);
 
                 if (this.timeLeft <= 0) {
@@ -205,14 +205,14 @@ class App {
             );
 
             if (this.gameState.checkStageEnd()) {
-                setTimeout(() => this.endStage(true), 2000);
+                setTimeout(() => this.endStage(true), CONFIG.DELAYS.STAGE_END);
                 return;
             }
 
             setTimeout(() => {
                 this.gameState.nextQuestion();
                 this.showNextQuestion();
-            }, 2000);
+            }, CONFIG.DELAYS.NEXT_QUESTION);
 
         } else {
             // 答錯
