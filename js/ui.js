@@ -99,8 +99,12 @@ class UI {
             <h2>${gameState.category} - 關卡 ${gameState.stageNumber}</h2>
             <div class="stage-type">${titlePrefix}</div>
           </div>
-          <div class="hearts-container" id="hearts-container">
+            <div class="hearts-container" id="hearts-container">
             ${heartsHtml}
+          </div>
+          <div class="timer-container" id="timer-container" style="display: none;">
+            <span class="timer-icon">⏳</span>
+            <span class="timer-text" id="timer-text">0</span>
           </div>
           <button class="escape-btn" onclick="app.escapeStage()">🏃 逃跑</button>
         </div>
@@ -308,6 +312,56 @@ class UI {
       const percentage = Math.max(0, (current / max) * 100);
       hpBar.style.width = percentage + '%';
       hpText.textContent = `${current} / ${max}`;
+    }
+  }
+
+  // 更新計時器
+  updateTimer(seconds, isUrgent = false) {
+    const container = document.getElementById('timer-container');
+    const text = document.getElementById('timer-text');
+    if (!container || !text) return;
+
+    container.style.display = 'flex';
+    text.textContent = seconds;
+
+    if (isUrgent) {
+      container.classList.add('urgent');
+    } else {
+      container.classList.remove('urgent');
+    }
+  }
+
+  // 隱藏計時器
+  hideTimer() {
+    const container = document.getElementById('timer-container');
+    if (container) {
+      container.style.display = 'none';
+      container.classList.remove('urgent');
+    }
+  }
+
+  // 更新計時器
+  updateTimer(seconds, isUrgent = false) {
+    const container = document.getElementById('timer-container');
+    const text = document.getElementById('timer-text');
+    if (!container || !text) return;
+
+    container.style.display = 'flex';
+    text.textContent = seconds;
+
+    if (isUrgent) {
+      container.classList.add('urgent');
+    } else {
+      container.classList.remove('urgent');
+    }
+  }
+
+  // 隱藏計時器
+  hideTimer() {
+    const container = document.getElementById('timer-container');
+    if (container) {
+      container.style.display = 'none';
+      container.classList.remove('urgent');
     }
   }
 

@@ -9,6 +9,8 @@ class App {
         this.vocabularyData = null;
         this.currentCategory = null;
         this.stageMap = []; // 存儲當前分類的關卡映射
+        this.timer = null; // 計時器 Interval
+        this.timeLeft = 0;
     }
 
     // 初始化應用
@@ -96,10 +98,83 @@ class App {
         if (question.mode === 'en-to-zh') {
             this.audio.speak(question.correctWord.word);
         }
+
+        // 啟動計時器 (如果需要)
+        this.startTimer();
+    }
+
+    // 啟動計時器
+    startTimer() {
+        this.stopTimer();
+        this.ui.hideTimer();
+
+        let duration = 0;
+        if (this.gameState.isBigBoss) {
+            duration = CONFIG.TIMER.BIG_BOSS;
+        } else if (this.gameState.isBoss) {
+            duration = CONFIG.TIMER.BOSS;
+        }
+
+        if (duration > 0) {
+            this.timeLeft = duration;
+            this.ui.updateTimer(this.timeLeft);
+
+            this.timer = setInterval(() => {
+                this.timeLeft--;
+                const isUrgent = this.timeLeft <= 5;
+                this.ui.updateTimer(this.timeLeft, isUrgent);
+
+                if (this.timeLeft <= 0) {
+                    this.handleTimeout();
+                }
+            }, 1000);
+        }
+    }
+
+    // 停止計時器
+    stopTimer() {
+        if (this.timer) {
+            clearInterval(this.timer);
+            this.timer = null;
+        }
+    }
+
+    // 處理超時 (視為 MISS)
+    handleTimeout() {
+        this.stopTimer();
+
+        // 禁用所有按鈕
+        document.querySelectorAll('.weapon-btn').forEach(btn => {
+            btn.disabled = true;
+        });
+
+        const currentQ = this.gameState.currentQuestion;
+
+        // 答錯
+        this.audio.playMissSound();
+        this.gameState.updateStatus(false);
+        this.ui.updateStatus(
+            this.gameState.hearts,
+            this.gameState.maxHearts,
+            this.gameState.monsterHP,
+            this.gameState.maxMonsterHP
+        );
+
+        // 顯示答錯對話框
+        this.audio.speak(currentQ.correctWord.word);
+        this.ui.showWrongAnswerDialog(currentQ, () => {
+            if (this.gameState.hearts <= 0) {
+                this.endStage(false);
+            } else {
+                this.gameState.nextQuestion();
+                this.showNextQuestion();
+            }
+        });
     }
 
     // 選擇武器(答題)
     selectWeapon(selected) {
+        this.stopTimer();
         // 禁用所有按鈕
         document.querySelectorAll('.weapon-btn').forEach(btn => {
             btn.disabled = true;
@@ -187,6 +262,10 @@ class App {
         // 添加選中的部分
         currentQ.selectedParts.push(part);
 
+        // 如果已進入選擇流程且計時器還在跑，不需要停，
+        // 但如果想更嚴格一點，可以在點擊第一個 part 時就停，或是直到滿3個。
+        // 這裡選擇直到滿3個再停。
+
         // 從剩餘選項中移除
         const index = currentQ.remainingOptions.indexOf(part);
         if (index > -1) {
@@ -198,6 +277,7 @@ class App {
 
         // 如果已選擇3個部分，檢查答案
         if (currentQ.selectedParts.length === 3) {
+            this.stopTimer();
             // 禁用所有按鈕
             document.querySelectorAll('.weapon-btn').forEach(btn => {
                 btn.disabled = true;
@@ -317,6 +397,7 @@ class App {
 
     // 逃跑
     escapeStage() {
+        this.stopTimer();
         // 直接逃跑，不需要確認
         this.backToStageSelection();
     }

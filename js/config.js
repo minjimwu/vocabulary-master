@@ -14,6 +14,12 @@ const CONFIG = {
     BOSS_QUESTIONS: 10, // 小魔王題目數量
     BIG_BOSS_QUESTIONS: 20, // 大魔王題目數量
 
+    // 倒數計時設定 (秒)
+    TIMER: {
+        BOSS: 20,
+        BIG_BOSS: 10
+    },
+
     // 遊戲玩法參數
     GAME_PARAMS: {
         FILL_IN_BLANK: {

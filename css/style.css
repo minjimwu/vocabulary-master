@@ -1071,3 +1071,53 @@ body {
   letter-spacing: 2px;
   min-width: 80px;
 }
+/* 計時器樣式 */
+.timer-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  font-size: 24px;
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  padding: 8px 20px;
+  border-radius: 20px;
+  backdrop-filter: blur(5px);
+  z-index: 10;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  min-width: 100px;
+}
+
+.timer-text {
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+  color: #fff;
+  min-width: 1.5em;
+  text-align: center;
+}
+
+.timer-container.urgent {
+  background: rgba(239, 68, 68, 0.6);
+  border-color: #ef4444;
+  animation: timerPulse 0.5s infinite alternate;
+}
+
+.timer-container.urgent .timer-text {
+  color: #fff;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+@keyframes timerPulse {
+  from {
+    transform: translateX(-50%) scale(1);
+    box-shadow: 0 0 0px rgba(239, 68, 68, 0);
+  }
+  to {
+    transform: translateX(-50%) scale(1.1);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+  }
+}
