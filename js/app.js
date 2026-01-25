@@ -11,7 +11,6 @@ class App {
         this.stageMap = []; // 存儲當前分類的關卡映射
         this.timer = null; // 計時器 Interval
         this.timeLeft = 0;
-        this.phoneticCorrect = true; // 追蹤拼音題是否一直正確
     }
 
     // 初始化應用
@@ -68,7 +67,6 @@ class App {
 
     // 確認開始戰鬥
     confirmStartStage() {
-        this.phoneticCorrect = true; // 重置
         this.ui.renderGameScreen(this.gameState);
         this.showNextQuestion();
     }
@@ -356,12 +354,6 @@ class App {
 
         // 紀錄選擇
         currentQ.selectedLetters.push(letter);
-
-        // 檢查當前位元是否正確
-        if (letter.toLowerCase() !== currentQ.targetWord[currentQ.currentIndex].toLowerCase()) {
-            this.phoneticCorrect = false;
-        }
-
         currentQ.currentIndex++;
 
         if (currentQ.currentIndex < currentQ.targetWord.length) {
@@ -369,13 +361,20 @@ class App {
             currentQ.options = this.gameState.getPhoneticOptions(currentQ.targetWord, currentQ.currentIndex);
             this.ui.updatePhoneticSpelling(currentQ);
         } else {
-            // 拼寫完成：檢查最終結果
+            // 拼寫完成：顯示最後一個字母，清空選項，然後檢查最終結果
+            currentQ.options = []; // 清空選項
+            this.ui.updatePhoneticSpelling(currentQ);
+
             this.stopTimer();
             // 禁用按鈕
             document.querySelectorAll('.weapon-btn').forEach(btn => btn.disabled = true);
 
             setTimeout(() => {
-                if (this.phoneticCorrect) {
+                // 檢查最終拼寫字串是否與目標一致
+                const finalSpelling = currentQ.selectedLetters.join('').toLowerCase();
+                const isCorrect = finalSpelling === currentQ.targetWord.toLowerCase();
+
+                if (isCorrect) {
                     // 答對
                     this.audio.playHitSound();
                     this.audio.speak(currentQ.correctWord.word);
@@ -423,6 +422,25 @@ class App {
                 }
             }, 300);
         }
+    }
+
+    // 重新選擇拼音字母
+    deselectPhoneticLetter(index) {
+        const currentQ = this.gameState.currentQuestion;
+        if (currentQ.mode !== 'phonetic-spelling') return;
+
+        // 回溯到該 index (只保留 index 之前的字母)
+        currentQ.selectedLetters = currentQ.selectedLetters.slice(0, index);
+        currentQ.currentIndex = index;
+
+        // 重新獲取該位元的選項
+        currentQ.options = this.gameState.getPhoneticOptions(currentQ.targetWord, currentQ.currentIndex);
+
+        // 更新 UI
+        this.ui.updatePhoneticSpelling(currentQ);
+
+        // 確保按鈕可用
+        document.querySelectorAll('.weapon-btn').forEach(btn => btn.disabled = false);
     }
 
     // 結束關卡

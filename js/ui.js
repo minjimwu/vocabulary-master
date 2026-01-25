@@ -197,7 +197,7 @@ class UI {
             ${Array(question.targetWord.length).fill(0).map((_, i) => {
         const char = question.selectedLetters[i] || '?';
         const isFilled = i < question.selectedLetters.length;
-        return `<span class="word-part ${isFilled ? 'selected' : 'empty'}">${char}</span>`;
+        return `<span class="word-part ${isFilled ? 'selected' : 'empty'}" ${isFilled ? `onclick="app.deselectPhoneticLetter(${i})"` : ''} style="${isFilled ? 'cursor: pointer;' : ''}">${char}</span>`;
       }).join('')}
           </div>
           <div class="remaining-options">
@@ -291,7 +291,7 @@ class UI {
     slotsEl.innerHTML = Array(question.targetWord.length).fill(0).map((_, i) => {
       const char = question.selectedLetters[i] || '?';
       const isFilled = i < question.selectedLetters.length;
-      return `<span class="word-part ${isFilled ? 'selected' : 'empty'}">${char}</span>`;
+      return `<span class="word-part ${isFilled ? 'selected' : 'empty'}" ${isFilled ? `onclick="app.deselectPhoneticLetter(${i})"` : ''} style="${isFilled ? 'cursor: pointer;' : ''}">${char}</span>`;
     }).join('');
 
     // 更新選項佈建
