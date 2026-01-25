@@ -111,6 +111,8 @@ class App {
         if (isCorrect) {
             // 答對
             this.audio.playHitSound();
+            // 唸出單字
+            this.audio.speak(currentQ.correctWord.word);
             this.ui.animateHit();
             this.ui.animateSwordAttack();
             this.gameState.updateStatus(true);
@@ -208,6 +210,8 @@ class App {
                 if (isCorrect) {
                     // 答對
                     this.audio.playHitSound();
+                    // 唸出單字
+                    this.audio.speak(currentQ.correctWord.word);
                     this.ui.animateHit();
                     this.ui.animateSwordAttack();
                     this.gameState.correctAnswers++;
