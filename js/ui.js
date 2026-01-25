@@ -318,12 +318,37 @@ class UI {
     setTimeout(() => monster.classList.remove('hit'), 500);
   }
 
+  // 劍揮擊動畫
+  animateSwordAttack() {
+    const monster = document.getElementById('monster');
+    if (!monster) return;
+
+    const sword = document.createElement('div');
+    sword.className = 'sword-swing';
+    sword.textContent = '🗡️';
+
+    // 增加隨機起始位置（略微偏左或偏右）
+    const offset = Math.random() * 40 - 20;
+    sword.style.marginLeft = offset + 'px';
+
+    monster.appendChild(sword);
+
+    // 強制重繪
+    sword.offsetHeight;
+    sword.classList.add('animate');
+
+    // 動畫結束後移除
+    setTimeout(() => {
+      sword.remove();
+    }, 600);
+  }
+
   // 攻擊 MISS
   animateMiss() {
     const monster = document.getElementById('monster');
     const miss = document.createElement('div');
     miss.className = 'miss-text';
-    miss.textContent = 'MISS!';
+    miss.textContent = '😵‍💫 MISS! 🤕';
     monster.parentElement.appendChild(miss);
 
     setTimeout(() => miss.remove(), 1000);
@@ -339,7 +364,7 @@ class UI {
 
     overlay.innerHTML = `
             <div class="modal-content">
-                <div class="modal-title">MISS!</div>
+                <div class="modal-title">😵‍💫 MISS! 🤕</div>
                 <div class="modal-answer-label">正確答案是</div>
                 <div class="modal-answer-text">
                     ${question.correctWord.word}<br>
