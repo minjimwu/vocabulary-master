@@ -728,6 +728,22 @@ body {
   border-radius: 10px;
 }
 
+.modal-wrong-choice {
+  font-size: 24px;
+  color: #94a3b8;
+  margin-bottom: 5px;
+  font-style: italic;
+  opacity: 0.8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.modal-wrong-choice span {
+  text-decoration: line-through;
+}
+
 .learn-btn {
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: white;

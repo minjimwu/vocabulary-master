@@ -458,16 +458,22 @@ class UI {
   }
 
   // 顯示答錯對話框
-  showWrongAnswerDialog(question, onContinue) {
+  showWrongAnswerDialog(question, userChoice, onContinue) {
     const existing = document.querySelector('.modal-overlay');
     if (existing) existing.remove();
 
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
 
+    let wrongChoiceHtml = '';
+    if (userChoice) {
+      wrongChoiceHtml = `<div class="modal-wrong-choice">❌ <span>${userChoice}</span></div>`;
+    }
+
     overlay.innerHTML = `
             <div class="modal-content">
                 <div class="modal-title">😵‍💫 MISS! 🤕</div>
+                ${wrongChoiceHtml}
                 <div class="modal-answer-label">正確答案是</div>
                 <div class="modal-answer-text" id="modal-answer-replay" style="cursor: pointer;">
                     <div class="word-pronounce-container">
