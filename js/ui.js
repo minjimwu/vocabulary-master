@@ -457,6 +457,30 @@ class UI {
     setTimeout(() => miss.remove(), 1000);
   }
 
+  // 擊敗怪物動畫
+  animateMonsterDefeat(onComplete) {
+    const monster = document.getElementById('monster');
+    if (!monster) {
+      if (onComplete) onComplete();
+      return;
+    }
+
+    // 1. 強烈震動 (0.8s)
+    monster.classList.add('defeat-shake');
+
+    // 2. 震動一段時間後飛出
+    setTimeout(() => {
+      monster.classList.remove('defeat-shake');
+      monster.classList.add('defeat-fly-out');
+
+      // 3. 動畫結束後執行回調
+      setTimeout(() => {
+        monster.classList.remove('defeat-fly-out');
+        if (onComplete) onComplete();
+      }, 1200); // 對應 CSS flyOutAndRotate 的持續時間
+    }, 800); // 震動持續時間
+  }
+
   // 顯示答錯對話框
   showWrongAnswerDialog(question, userChoice, onContinue) {
     const existing = document.querySelector('.modal-overlay');

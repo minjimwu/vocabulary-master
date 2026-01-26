@@ -168,7 +168,7 @@ class App {
 
         // 顯示答錯對話框
         this.audio.speak(currentQ.correctWord.word);
-        this.ui.showWrongAnswerDialog(currentQ, () => {
+        this.ui.showWrongAnswerDialog(currentQ, '⌛ 逾時', () => {
             if (this.gameState.hearts <= 0) {
                 this.endStage(false);
             } else {
@@ -205,7 +205,12 @@ class App {
             );
 
             if (this.gameState.checkStageEnd()) {
-                setTimeout(() => this.endStage(true), CONFIG.DELAYS.STAGE_END);
+                // 擊敗怪物動畫
+                setTimeout(() => {
+                    this.ui.animateMonsterDefeat(() => {
+                        this.endStage(true);
+                    });
+                }, 500); // 稍微延遲讓劍閃完
                 return;
             }
 
@@ -228,7 +233,7 @@ class App {
             // 顯示答錯對話框
             // 播放正確單字的發音
             this.audio.speak(currentQ.correctWord.word);
-            this.ui.showWrongAnswerDialog(currentQ, () => {
+            this.ui.showWrongAnswerDialog(currentQ, selected, () => {
                 if (this.gameState.hearts <= 0) {
                     this.endStage(false);
                 } else {
@@ -310,7 +315,11 @@ class App {
                     );
 
                     if (this.gameState.checkStageEnd()) {
-                        setTimeout(() => this.endStage(true), 2000);
+                        setTimeout(() => {
+                            this.ui.animateMonsterDefeat(() => {
+                                this.endStage(true);
+                            });
+                        }, 500);
                         return;
                     }
 
@@ -334,7 +343,7 @@ class App {
                     // 顯示答錯對話框
                     // 播放正確單字的發音
                     this.audio.speak(currentQ.correctWord.word);
-                    this.ui.showWrongAnswerDialog(currentQ, () => {
+                    this.ui.showWrongAnswerDialog(currentQ, currentQ.selectedParts.join(''), () => {
                         if (this.gameState.hearts <= 0) {
                             this.endStage(false);
                         } else {
@@ -390,7 +399,11 @@ class App {
                     );
 
                     if (this.gameState.checkStageEnd()) {
-                        setTimeout(() => this.endStage(true), CONFIG.DELAYS.STAGE_END);
+                        setTimeout(() => {
+                            this.ui.animateMonsterDefeat(() => {
+                                this.endStage(true);
+                            });
+                        }, 500);
                         return;
                     }
 
@@ -411,7 +424,7 @@ class App {
                     );
 
                     this.audio.speak(currentQ.correctWord.word);
-                    this.ui.showWrongAnswerDialog(currentQ, () => {
+                    this.ui.showWrongAnswerDialog(currentQ, currentQ.selectedLetters.join(''), () => {
                         if (this.gameState.hearts <= 0) {
                             this.endStage(false);
                         } else {

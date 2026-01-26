@@ -519,6 +519,54 @@ body {
   }
 }
 
+/* 怪物擊敗動畫 */
+.defeat-shake {
+  animation: intenseShake 0.8s ease-in-out infinite;
+}
+
+@keyframes intenseShake {
+
+  0%,
+  100% {
+    transform: translateX(0) translateY(0);
+  }
+
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-10px) translateY(-5px) rotate(-3deg);
+  }
+
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(10px) translateY(5px) rotate(3deg);
+  }
+}
+
+.defeat-fly-out {
+  animation: flyOutAndRotate 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes flyOutAndRotate {
+  0% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+
+  20% {
+    transform: scale(1.2) rotate(-10deg);
+  }
+
+  100% {
+    transform: translate(500px, -500px) rotate(720deg) scale(0.1);
+    opacity: 0;
+  }
+}
+
 /* 結果畫面 */
 .result-screen {
   text-align: center;
