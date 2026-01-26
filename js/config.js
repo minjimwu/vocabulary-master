@@ -9,7 +9,7 @@ const CONFIG = {
 
     // 怪物血量配置
     MONSTER_HP: {
-        NORMAL: 3,
+        NORMAL: 10,
         BOSS: 20,
         BIG_BOSS: 20
     },
