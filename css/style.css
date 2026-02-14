@@ -1326,3 +1326,259 @@ body {
   align-items: center;
   width: 100%;
 }
+/* 寶物與背包系統 */
+.inventory-container {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 15px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  border-radius: 12px;
+}
+
+.inventory-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.item-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.item-btn:hover:not(:disabled) {
+  transform: scale(1.2);
+}
+
+.item-btn:disabled {
+  filter: grayscale(1);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.item-count {
+  font-size: 14px;
+  font-weight: bold;
+  color: #fbbf24;
+}
+
+/* 寶箱模態視窗 */
+.chest-modal-content {
+  background: linear-gradient(135deg, #4c1d95 0%, #1e1b4b 100%);
+  border: 4px solid #fbbf24;
+  color: #fff;
+}
+
+.chest-animation {
+  font-size: 100px;
+  margin: 30px 0;
+  cursor: pointer;
+  transition: transform 0.3s;
+  display: inline-block;
+}
+
+.chest-animation:hover {
+  transform: scale(1.1);
+}
+
+.chest-animation.opening {
+  animation: chestShake 0.5s infinite;
+}
+
+@keyframes chestShake {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-10deg); }
+  75% { transform: rotate(10deg); }
+}
+
+.reward-display {
+  display: none;
+  text-align: center;
+  animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.reward-icon {
+  font-size: 80px;
+  margin-bottom: 10px;
+}
+
+.reward-name {
+  font-size: 24px;
+  font-weight: bold;
+  color: #fbbf24;
+  margin-bottom: 20px;
+}
+
+@keyframes popIn {
+  0% { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* 背包欄位優化 (怪物欄右上角) */
+.monster-inventory-wrapper {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 50;
+}
+
+.monster-inventory-wrapper .inventory-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: none;
+  padding: 0;
+}
+
+.monster-inventory-wrapper .inventory-item {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  position: relative;
+}
+
+.monster-inventory-wrapper .item-btn {
+  font-size: 28px;
+}
+
+.monster-inventory-wrapper .item-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  background: #f59e0b;
+  color: #000;
+  font-size: 11px;
+  font-weight: 900;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid #fff;
+}
+
+/* 聽力題耳朵放大 */
+.large-phonetic-btn {
+  font-size: 36px !important;
+  padding: 25px !important;
+}
+
+/* 手機優化 */
+@media (max-width: 600px) {
+  .monster-container {
+    min-height: 350px;
+  }
+  
+  .monster-emoji.normal { font-size: 180px; }
+  .monster-emoji.boss { font-size: 260px; }
+  .monster-emoji.big-boss { font-size: 300px; }
+  
+  .weakness-text {
+    font-size: 32px;
+  }
+  
+  .weapon-btn {
+    padding: 12px;
+    font-size: 16px;
+  }
+  
+  .game-screen {
+    padding: 15px;
+  }
+}
+
+/* 計時器位置調整 (怪物欄左上角) */
+#monster-container .timer-container {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: auto; /* 確保不被之前的 right: 20px 拉長 */
+  width: auto;
+  min-width: 80px;
+  z-index: 100;
+  margin-top: 0;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* 物品使用特效 */
+.time-stop-flash {
+  animation: frozenPulse 1s;
+}
+
+@keyframes frozenPulse {
+  0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); background: rgba(59, 130, 246, 0.3); }
+  70% { box-shadow: 0 0 0 50px rgba(59, 130, 246, 0); background: rgba(255, 255, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+}
+
+.healing-flash {
+  animation: healPulse 1s;
+}
+
+@keyframes healPulse {
+  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); background: rgba(34, 197, 94, 0.3); }
+  70% { box-shadow: 0 0 0 50px rgba(34, 197, 94, 0); background: rgba(255, 255, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+.monster-frozen {
+  filter: grayscale(0.5) brightness(1.2) sepia(0.3) hue-rotate(180deg);
+  transition: filter 0.5s;
+}
+
+/* 全屏覆蓋特效 */
+.effect-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0;
+}
+
+.effect-overlay.active {
+  animation: overlayFlash 0.8s ease-out;
+}
+
+@keyframes overlayFlash {
+  0% { opacity: 0.5; }
+  100% { opacity: 0; }
+}
+
+.effect-overlay.timer-stop { background: radial-gradient(circle, transparent 20%, #3b82f6 100%); }
+.effect-overlay.medkit { background: radial-gradient(circle, transparent 20%, #22c55e 100%); }
+
+/* 聽力題放大鐘耳朵圖示放大 */
+.magnifier .weakness-text.phonetic-icon {
+  font-size: 100px;
+  line-height: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

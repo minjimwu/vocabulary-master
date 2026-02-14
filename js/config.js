@@ -56,5 +56,14 @@ const CONFIG = {
         PHONETIC_SPELLING: {
             optionCount: 3       // 拼音題每次提供的字母數量
         }
+    },
+
+    // 寶物配置
+    ITEMS: {
+        MAX_ACCUMULATION: 3,
+        TYPES: {
+            TIME_STOP: 'timeStop',
+            MEDKIT: 'medkit'
+        }
     }
 };

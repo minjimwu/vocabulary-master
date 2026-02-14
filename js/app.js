@@ -11,6 +11,7 @@ class App {
         this.stageMap = []; // 存儲當前分類的關卡映射
         this.timer = null; // 計時器 Interval
         this.timeLeft = 0;
+        this.ctrlCount = 0; // 密技計數
     }
 
     // 初始化應用
@@ -25,6 +26,9 @@ class App {
 
             // 顯示分類選擇
             this.ui.renderCategorySelection();
+
+            // 設置全域按鍵監聽 (用於密技)
+            window.addEventListener('keydown', (e) => this.handleGlobalKeyDown(e));
         } catch (error) {
             console.error('初始化失敗:', error);
             document.getElementById('app').innerHTML = '<div class="error">加載失敗,請重新整理頁面</div>';
@@ -96,7 +100,8 @@ class App {
             this.gameState.hearts,
             this.gameState.maxHearts,
             this.gameState.monsterHP,
-            this.gameState.maxMonsterHP
+            this.gameState.maxMonsterHP,
+            this.gameState.inventory
         );
         this.ui.renderQuestion(question, currentIndex, totalQuestions);
 
@@ -107,6 +112,9 @@ class App {
 
         // 啟動計時器 (如果需要)
         this.startTimer();
+
+        // 確保魔王凍結效果在下一題重置 (如果是正常過渡)
+        this.ui.clearTimeStopEffect();
     }
 
     // 啟動計時器
@@ -163,7 +171,8 @@ class App {
             this.gameState.hearts,
             this.gameState.maxHearts,
             this.gameState.monsterHP,
-            this.gameState.maxMonsterHP
+            this.gameState.maxMonsterHP,
+            this.gameState.inventory
         );
 
         // 顯示答錯對話框
@@ -201,7 +210,8 @@ class App {
                 this.gameState.hearts,
                 this.gameState.maxHearts,
                 this.gameState.monsterHP,
-                this.gameState.maxMonsterHP
+                this.gameState.maxMonsterHP,
+                this.gameState.inventory
             );
 
             if (this.gameState.checkStageEnd()) {
@@ -227,7 +237,8 @@ class App {
                 this.gameState.hearts,
                 this.gameState.maxHearts,
                 this.gameState.monsterHP,
-                this.gameState.maxMonsterHP
+                this.gameState.maxMonsterHP,
+                this.gameState.inventory
             );
 
             // 顯示答錯對話框
@@ -311,7 +322,8 @@ class App {
                         this.gameState.hearts,
                         this.gameState.maxHearts,
                         this.gameState.monsterHP,
-                        this.gameState.maxMonsterHP
+                        this.gameState.maxMonsterHP,
+                        this.gameState.inventory
                     );
 
                     if (this.gameState.checkStageEnd()) {
@@ -337,7 +349,8 @@ class App {
                         this.gameState.hearts,
                         this.gameState.maxHearts,
                         this.gameState.monsterHP,
-                        this.gameState.maxMonsterHP
+                        this.gameState.maxMonsterHP,
+                        this.gameState.inventory
                     );
 
                     // 顯示答錯對話框
@@ -395,7 +408,8 @@ class App {
                         this.gameState.hearts,
                         this.gameState.maxHearts,
                         this.gameState.monsterHP,
-                        this.gameState.maxMonsterHP
+                        this.gameState.maxMonsterHP,
+                        this.gameState.inventory
                     );
 
                     if (this.gameState.checkStageEnd()) {
@@ -420,7 +434,8 @@ class App {
                         this.gameState.hearts,
                         this.gameState.maxHearts,
                         this.gameState.monsterHP,
-                        this.gameState.maxMonsterHP
+                        this.gameState.maxMonsterHP,
+                        this.gameState.inventory
                     );
 
                     this.audio.speak(currentQ.correctWord.word);
@@ -482,15 +497,83 @@ class App {
             }
         }
 
-        this.ui.renderStageResult(
-            isVictory,
-            this.gameState.isBoss || this.gameState.isBigBoss,
-            this.currentCategory,
-            this.gameState.stageNumber,
-            0,
-            stats,
-            this.gameState
-        );
+        if (isVictory && (this.gameState.isBoss || this.gameState.isBigBoss)) {
+            // 魔王勝利，觸發寶箱
+            this.openTreasureChest(() => {
+                this.ui.renderStageResult(
+                    isVictory,
+                    this.gameState.isBoss || this.gameState.isBigBoss,
+                    this.currentCategory,
+                    this.gameState.stageNumber,
+                    0,
+                    stats,
+                    this.gameState
+                );
+            });
+        } else {
+            this.ui.renderStageResult(
+                isVictory,
+                this.gameState.isBoss || this.gameState.isBigBoss,
+                this.currentCategory,
+                this.gameState.stageNumber,
+                0,
+                stats,
+                this.gameState
+            );
+        }
+    }
+
+    // --- 寶物系統 ---
+
+    // 開啟寶箱
+    openTreasureChest(onComplete) {
+        // 明確定義所有可用物品類型
+        const itemTypes = [CONFIG.ITEMS.TYPES.TIME_STOP, CONFIG.ITEMS.TYPES.MEDKIT];
+        // 隨機抽選索引
+        const randomIndex = Math.floor(Math.random() * itemTypes.length);
+        const randomType = itemTypes[randomIndex];
+
+        this.ui.renderTreasureChest(randomType, () => {
+            const added = this.gameState.addItem(randomType);
+            // 如果背包已滿，雖然不報錯但我們也可以提示一下 (可選)
+            if (onComplete) onComplete();
+        });
+    }
+
+    // 使用時間停止
+    useTimeStop() {
+        if (this.gameState.useItem(CONFIG.ITEMS.TYPES.TIME_STOP)) {
+            this.stopTimer();
+            this.ui.showTimeStopEffect();
+            this.ui.updateStatus(
+                this.gameState.hearts,
+                this.gameState.maxHearts,
+                this.gameState.monsterHP,
+                this.gameState.maxMonsterHP,
+                this.gameState.inventory
+            );
+            // 朗讀提示：時間停止
+            // this.audio.speak("Time Stopped");
+        }
+    }
+
+    // 使用醫療包
+    useMedkit() {
+        if (this.gameState.hearts < this.gameState.maxHearts) {
+            if (this.gameState.useItem(CONFIG.ITEMS.TYPES.MEDKIT)) {
+                this.gameState.hearts = Math.min(this.gameState.maxHearts, this.gameState.hearts + 1);
+                this.ui.showMedkitEffect();
+                this.ui.updateStatus(
+                    this.gameState.hearts,
+                    this.gameState.maxHearts,
+                    this.gameState.monsterHP,
+                    this.gameState.maxMonsterHP,
+                    this.gameState.inventory
+                );
+            }
+        } else {
+            // alert('生命力已滿!');
+        }
     }
 
     // 下一關
@@ -541,6 +624,44 @@ class App {
             // 強制重新載入以確保狀態完全重置
             location.reload();
         }
+    }
+
+    // 全域按鍵處理 (密技)
+    handleGlobalKeyDown(event) {
+        // 僅在遊戲進行中且非結算畫面時有效 (簡單判斷: 是否有 monster-hp-bar)
+        if (!document.getElementById('monster-hp-bar')) {
+            this.ctrlCount = 0;
+            return;
+        }
+
+        if (event.key === 'Control') {
+            this.ctrlCount++;
+            if (this.ctrlCount >= 10) {
+                this.ctrlCount = 0;
+                this.activateCheat();
+            }
+        } else {
+            // 按下其他鍵則重置計數
+            this.ctrlCount = 0;
+        }
+    }
+
+    // 啟動密技
+    activateCheat() {
+        this.gameState.monsterHP = 0;
+        this.ui.updateStatus(
+            this.gameState.hearts,
+            this.gameState.maxHearts,
+            this.gameState.monsterHP,
+            this.gameState.maxMonsterHP,
+            this.gameState.inventory
+        );
+
+        // 觸發擊敗動畫與結算
+        this.stopTimer();
+        this.ui.animateMonsterDefeat(() => {
+            this.endStage(true);
+        });
     }
 }
 

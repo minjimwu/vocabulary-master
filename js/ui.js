@@ -124,6 +124,13 @@ class UI {
                 <div class="monster-hp-text" id="monster-hp-text">${gameState.monsterHP} / ${gameState.maxMonsterHP}</div>
             </div>
           </div>
+          
+          <!-- 背包僅在魔王關卡顯示，且放入怪物欄右上角 -->
+          ${(gameState.isBoss || gameState.isBigBoss) ? `
+            <div id="inventory-container-wrapper" class="monster-inventory-wrapper">
+              ${this.renderInventory(gameState.inventory)}
+            </div>
+          ` : ''}
         </div>
 
         <div class="battle-area">
@@ -141,6 +148,31 @@ class UI {
     `;
   }
 
+  // 渲染背包
+  renderInventory(inventory) {
+    const timeStopType = CONFIG.ITEMS.TYPES.TIME_STOP;
+    const medkitType = CONFIG.ITEMS.TYPES.MEDKIT;
+
+    return `
+      <div class="inventory-container">
+        <div class="inventory-item">
+          <button class="item-btn" onclick="app.useTimeStop()" title="時間停止" 
+                  ${inventory[timeStopType] <= 0 ? 'disabled' : ''}>
+            ⏱️
+            <span class="item-badge">${inventory[timeStopType]}</span>
+          </button>
+        </div>
+        <div class="inventory-item">
+          <button class="item-btn" onclick="app.useMedkit()" title="醫療包" 
+                  ${inventory[medkitType] <= 0 ? 'disabled' : ''}>
+            💊
+            <span class="item-badge">${inventory[medkitType]}</span>
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
 
   // 渲染題目
   renderQuestion(question, questionNumber, totalQuestions) {
@@ -151,6 +183,11 @@ class UI {
 
     // 使用 innerHTML 以支持填空題的 HTML 標籤
     weaknessEl.innerHTML = question.weakness;
+    if (question.mode === 'phonetic-spelling') {
+      weaknessEl.classList.add('phonetic-icon');
+    } else {
+      weaknessEl.classList.remove('phonetic-icon');
+    }
     // 根據題型設置提示文字
     if (question.mode === 'fill-in-blank') {
       modeHintEl.textContent = '選擇正確的字母填入空格';
@@ -202,7 +239,7 @@ class UI {
           </div>
           <div class="remaining-options">
             ${question.options.map(option => `
-              <button class="weapon-btn" onclick="app.selectPhoneticLetter('${option}')">
+              <button class="weapon-btn large-phonetic-btn" onclick="app.selectPhoneticLetter('${option}')">
                 ${option}
               </button>
             `).join('')}
@@ -234,9 +271,15 @@ class UI {
   }
 
   // 更新狀態
-  updateStatus(currentHearts, maxHearts, currentMonsterHP, maxMonsterHP) {
+  updateStatus(currentHearts, maxHearts, currentMonsterHP, maxMonsterHP, inventory) {
     this.updateHearts(currentHearts, maxHearts);
     this.updateMonsterHP(currentMonsterHP, maxMonsterHP);
+    if (inventory) {
+      const wrapper = document.getElementById('inventory-container-wrapper');
+      if (wrapper) {
+        wrapper.innerHTML = this.renderInventory(inventory);
+      }
+    }
   }
 
   updateHP(currentHearts, maxHearts) {
@@ -686,5 +729,91 @@ class UI {
         </div>
       </div>
     `;
+  }
+
+  // 渲染寶箱
+  renderTreasureChest(type, onOpen) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+
+    const itemInfo = type === CONFIG.ITEMS.TYPES.TIME_STOP ? { icon: '⏱️', name: '時間停止' } : { icon: '💊', name: '醫療包' };
+
+    overlay.innerHTML = `
+      <div class="modal-content chest-modal-content">
+        <div class="modal-title" style="color: #fbbf24;">發現寶箱！</div>
+        <div id="chest-animation" class="chest-animation">🎁</div>
+        <div id="reward-display" class="reward-display">
+          <div class="reward-icon">${itemInfo.icon}</div>
+          <div class="reward-name">獲得 ${itemInfo.name}！</div>
+          <button class="next-btn" id="claim-btn">收下寶物</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const chest = overlay.querySelector('#chest-animation');
+    const reward = overlay.querySelector('#reward-display');
+    const claimBtn = overlay.querySelector('#claim-btn');
+
+    chest.onclick = () => {
+      chest.classList.add('opening');
+      setTimeout(() => {
+        chest.style.display = 'none';
+        reward.style.display = 'block';
+        if (window.app && window.app.audio) {
+          window.app.audio.playVictorySound();
+        }
+      }, 1000);
+    };
+
+    claimBtn.onclick = () => {
+      overlay.remove();
+      if (onOpen) onOpen();
+    };
+  }
+
+  // 顯示時間停止特效
+  showTimeStopEffect() {
+    const monster = document.getElementById('monster');
+    const container = document.getElementById('monster-container');
+    if (monster) monster.classList.add('monster-frozen');
+    if (container) {
+      container.classList.add('time-stop-flash');
+      setTimeout(() => container.classList.remove('time-stop-flash'), 1000);
+    }
+    this.createEffectOverlay('timer-stop');
+  }
+
+  // 顯示醫療包特效
+  showMedkitEffect() {
+    const container = document.getElementById('monster-container');
+    if (container) {
+      container.classList.add('healing-flash');
+      setTimeout(() => container.classList.remove('healing-flash'), 1000);
+    }
+    this.createEffectOverlay('medkit');
+
+    // 讓愛心閃爍一下
+    const hearts = document.getElementById('hearts-container');
+    if (hearts) {
+      hearts.style.transform = 'scale(1.2)';
+      hearts.style.transition = 'transform 0.3s';
+      setTimeout(() => hearts.style.transform = 'scale(1)', 300);
+    }
+  }
+
+  // 創建全屏覆蓋特效
+  createEffectOverlay(type) {
+    const overlay = document.createElement('div');
+    overlay.className = `effect-overlay ${type} active`;
+    document.body.appendChild(overlay);
+    setTimeout(() => overlay.remove(), 800);
+  }
+
+  // 移除時間停止特效 (恢復怪物顏色)
+  clearTimeStopEffect() {
+    const monster = document.getElementById('monster');
+    if (monster) monster.classList.remove('monster-frozen');
   }
 }

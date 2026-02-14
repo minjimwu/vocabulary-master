@@ -20,6 +20,12 @@ class GameState {
         // 題目隊列
         this.pendingQuestions = []; // 尚未出過的題目
         this.retryQuestions = []; // 答錯需要重考的題目
+
+        // 寶物背包
+        this.inventory = {
+            [CONFIG.ITEMS.TYPES.TIME_STOP]: 0,
+            [CONFIG.ITEMS.TYPES.MEDKIT]: 0
+        };
     }
 
     // 生成關卡地圖 (靜態方法)
@@ -437,5 +443,26 @@ class GameState {
             correctCount: this.correctAnswers,
             wordCount: this.vocabularyList.length
         };
+    }
+
+    // --- 寶物系統 ---
+
+    // 獲得寶物
+    addItem(type) {
+        const max = CONFIG.ITEMS.MAX_ACCUMULATION;
+        if (this.inventory[type] < max) {
+            this.inventory[type]++;
+            return true;
+        }
+        return false;
+    }
+
+    // 使用寶物
+    useItem(type) {
+        if (this.inventory[type] > 0) {
+            this.inventory[type]--;
+            return true;
+        }
+        return false;
     }
 }
