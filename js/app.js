@@ -63,8 +63,9 @@ class App {
         }
 
         this.currentCategory = category;
-        // 傳遞 config 給 game state
-        this.gameState.startStage(category, stageConfig, this.vocabularyData);
+        // 傳遞 config 與 持久化背包 給 game state
+        const inventory = this.progressManager.getInventory();
+        this.gameState.startStage(category, stageConfig, this.vocabularyData, inventory);
         // 顯示預覽而非直接開始
         this.ui.renderStagePreview(this.gameState);
     }
@@ -127,6 +128,9 @@ class App {
             duration = CONFIG.TIMER.BIG_BOSS;
         } else if (this.gameState.isBoss) {
             duration = CONFIG.TIMER.BOSS;
+        } else {
+            // 一般關卡
+            duration = CONFIG.TIMER.NORMAL;
         }
 
         if (duration > 0) {
@@ -482,14 +486,24 @@ class App {
                 true
             );
 
+            // 更新通關後的道具數量回進度管理 (雖然商店買的道具也是透過進度管理，但戰鬥中消耗的也在此同步)
+            // 不過目前邏輯是點擊使用就即時扣除 GameState.inventory，
+            // 我們在結束時同步回 ProgressManager
+            Object.keys(this.gameState.inventory).forEach(type => {
+                const count = this.gameState.inventory[type];
+                const current = this.progressManager.getInventory()[type] || 0;
+                this.progressManager.updateInventory(type, count - current);
+            });
+
             if (this.gameState.isBigBoss) {
                 // 大魔王勝利 -> 播放終極動畫
                 this.audio.playBossVictorySound();
                 this.ui.showFinalVictoryAnimation(() => {
-                    // 大魔王勝利後直接回首頁，不顯示結算畫面
-                    this.ui.renderCategorySelection();
+                    this.openTreasureChest(() => {
+                        this.ui.renderCategorySelection();
+                    }, 'BIG_BOSS');
                 });
-                return; // 暫停渲染，等待動畫結束後直接回首頁
+                return;
             } else if (this.gameState.isBoss) {
                 this.audio.playBossVictorySound();
             } else {
@@ -497,8 +511,9 @@ class App {
             }
         }
 
-        if (isVictory && (this.gameState.isBoss || this.gameState.isBigBoss)) {
-            // 魔王勝利，觸發寶箱
+        if (isVictory) {
+            // 所有關卡勝利都觸發寶箱 (金幣)
+            const stageType = this.gameState.isBigBoss ? 'BIG_BOSS' : (this.gameState.isBoss ? 'BOSS' : 'NORMAL');
             this.openTreasureChest(() => {
                 this.ui.renderStageResult(
                     isVictory,
@@ -509,7 +524,7 @@ class App {
                     stats,
                     this.gameState
                 );
-            });
+            }, stageType);
         } else {
             this.ui.renderStageResult(
                 isVictory,
@@ -523,27 +538,51 @@ class App {
         }
     }
 
-    // --- 寶物系統 ---
+    // --- 商店與寶物系統 ---
 
-    // 開啟寶箱
-    openTreasureChest(onComplete) {
-        // 明確定義所有可用物品類型
-        const itemTypes = [CONFIG.ITEMS.TYPES.TIME_STOP, CONFIG.ITEMS.TYPES.MEDKIT];
-        // 隨機抽選索引
-        const randomIndex = Math.floor(Math.random() * itemTypes.length);
-        const randomType = itemTypes[randomIndex];
+    // 開啟寶箱 (改為獲得金幣)
+    openTreasureChest(onComplete, stageType) {
+        const range = CONFIG.REWARDS[stageType] || CONFIG.REWARDS.NORMAL;
+        const amount = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
 
-        this.ui.renderTreasureChest(randomType, () => {
-            const added = this.gameState.addItem(randomType);
-            // 如果背包已滿，雖然不報錯但我們也可以提示一下 (可選)
+        this.ui.renderTreasureChest(amount, () => {
+            this.progressManager.addCoins(amount);
             if (onComplete) onComplete();
         });
     }
 
+    // 顯示商店
+    // 顯示商店
+    showShop() {
+        const coins = this.progressManager.getCoins();
+        const inventory = this.progressManager.getInventory();
+        this.ui.renderShop(coins, inventory, CONFIG.ITEMS.SHOP);
+    }
+
+    // 購買物品
+    buyItem(type) {
+        const item = CONFIG.ITEMS.SHOP.find(i => i.id === type);
+        if (!item) return;
+
+        if (this.progressManager.saveItemPurchase(type, item.price)) {
+            // 購買成功，重新渲染商店
+            this.showShop();
+        } else {
+            alert('金幣不足！');
+        }
+    }
+
     // 使用時間停止
-    useTimeStop() {
-        if (this.gameState.useItem(CONFIG.ITEMS.TYPES.TIME_STOP)) {
-            this.stopTimer();
+    useTimeStop(type) {
+        if (this.gameState.useItem(type)) {
+            // 根據類型決定增加的時間
+            let extraTime = 0;
+            if (type === CONFIG.ITEMS.TYPES.TIME_STOP_S) extraTime = 20;
+            else if (type === CONFIG.ITEMS.TYPES.TIME_STOP_L) extraTime = 40;
+
+            this.timeLeft += extraTime;
+            this.ui.updateTimer(this.timeLeft, this.timeLeft <= CONFIG.TIMER.URGENT_THRESHOLD);
+
             this.ui.showTimeStopEffect();
             this.ui.updateStatus(
                 this.gameState.hearts,
@@ -552,16 +591,18 @@ class App {
                 this.gameState.maxMonsterHP,
                 this.gameState.inventory
             );
-            // 朗讀提示：時間停止
-            // this.audio.speak("Time Stopped");
         }
     }
 
     // 使用醫療包
-    useMedkit() {
+    useMedkit(type) {
         if (this.gameState.hearts < this.gameState.maxHearts) {
-            if (this.gameState.useItem(CONFIG.ITEMS.TYPES.MEDKIT)) {
-                this.gameState.hearts = Math.min(this.gameState.maxHearts, this.gameState.hearts + 1);
+            if (this.gameState.useItem(type)) {
+                let healAmount = 0;
+                if (type === CONFIG.ITEMS.TYPES.MEDKIT_S) healAmount = 1;
+                else if (type === CONFIG.ITEMS.TYPES.MEDKIT_L) healAmount = 2;
+
+                this.gameState.hearts = Math.min(this.gameState.maxHearts, this.gameState.hearts + healAmount);
                 this.ui.showMedkitEffect();
                 this.ui.updateStatus(
                     this.gameState.hearts,
@@ -571,8 +612,6 @@ class App {
                     this.gameState.inventory
                 );
             }
-        } else {
-            // alert('生命力已滿!');
         }
     }
 

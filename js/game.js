@@ -21,11 +21,9 @@ class GameState {
         this.pendingQuestions = []; // 尚未出過的題目
         this.retryQuestions = []; // 答錯需要重考的題目
 
-        // 寶物背包
-        this.inventory = {
-            [CONFIG.ITEMS.TYPES.TIME_STOP]: 0,
-            [CONFIG.ITEMS.TYPES.MEDKIT]: 0
-        };
+        // 寶物背包 (戰鬥中持有)
+        this.inventory = {};
+        this.lastQuestionWord = null; // 紀錄上一個出題單字，用於避免重複
     }
 
     // 生成關卡地圖 (靜態方法)
@@ -100,7 +98,7 @@ class GameState {
 
     // 初始化關卡
     // stageConfig: { index, type, start, end, rangeEnd }
-    startStage(category, stageConfig, vocabularyData) {
+    startStage(category, stageConfig, vocabularyData, persistentInventory) {
         this.category = category;
         this.stageConfig = stageConfig;
         this.stageNumber = stageConfig.index;
@@ -131,6 +129,9 @@ class GameState {
         // 重置答題統計
         this.correctAnswers = 0;
         this.questionsToClear = this.vocabularyList.length;
+
+        // 初始化戰鬥背包
+        this.inventory = { ...persistentInventory };
     }
 
     // 計算怪物 HP
@@ -144,7 +145,22 @@ class GameState {
     getStageVocabulary(config) {
         // config.start 和 config.end 現在已經由 generateStageMap 明確計算好
         if (config.type === 'NORMAL') {
-            return this.allVocabulary.slice(config.start, config.end);
+            const vocabulary = this.allVocabulary.slice(config.start, config.end);
+
+            // 補足單字數量：若不足 WORDS_PER_NORMAL_STAGE，從先前的單字庫中隨機挑選補位
+            const targetCount = CONFIG.STAGE_GENERATION.WORDS_PER_NORMAL_STAGE;
+            if (vocabulary.length < targetCount && this.allVocabulary.length > 0) {
+                const needed = targetCount - vocabulary.length;
+                // 排除目前關卡已有的單字
+                const currentWordIds = new Set(vocabulary.map(v => v.word));
+                const pool = this.allVocabulary.filter(v => !currentWordIds.has(v.word));
+
+                if (pool.length > 0) {
+                    const extraWords = this.shuffleArray([...pool]).slice(0, needed);
+                    vocabulary.push(...extraWords);
+                }
+            }
+            return vocabulary;
         } else if (config.type === 'BOSS') {
             // 小魔王: 雖然範圍是 config.start 到 config.end (例如 30 個字)，
             // 但怪物只有 10 HP。不過題庫是這 30 個字。
@@ -165,20 +181,34 @@ class GameState {
         let questionWord = null;
 
         if (this.pendingQuestions.length > 0) {
+            // 優先從 pending 取，若首個單字與上一題重複且還有其他選項，則往後排
+            if (this.lastQuestionWord && this.pendingQuestions[0].word === this.lastQuestionWord.word && this.pendingQuestions.length > 1) {
+                const dup = this.pendingQuestions.shift();
+                this.pendingQuestions.push(dup);
+            }
             questionWord = this.pendingQuestions.shift();
         } else if (this.retryQuestions.length > 0) {
-            const index = Math.floor(Math.random() * this.retryQuestions.length);
+            // 從 retry 取，隨機挑選直到不重複 (若只有一個則還是只能選它)
+            let index = Math.floor(Math.random() * this.retryQuestions.length);
+            if (this.lastQuestionWord && this.retryQuestions.length > 1) {
+                let attempts = 0;
+                while (this.retryQuestions[index].word === this.lastQuestionWord.word && attempts < 10) {
+                    index = Math.floor(Math.random() * this.retryQuestions.length);
+                    attempts++;
+                }
+            }
             questionWord = this.retryQuestions.splice(index, 1)[0];
         } else if (this.monsterHP > 0 && this.hearts > 0) {
-            // 題目耗盡但戰鬥未結束：重置題庫繼續出題 (Endless Mode)
-            // 需求: "若都沒題目了，則重覆出題庫的題目"
+            // 題目耗盡重置題庫
             this.pendingQuestions = this.shuffleArray([...this.vocabularyList]);
+            // 遞迴呼叫時會處理 pending 的重複邏輯
             return this.generateQuestion();
         } else {
             return null;
         }
 
         const correctWord = questionWord;
+        this.lastQuestionWord = correctWord; // 更新最後使用的單字
 
         // 隨機決定題型
         const rand = Math.random();
@@ -448,10 +478,10 @@ class GameState {
     // --- 寶物系統 ---
 
     // 獲得寶物
-    addItem(type) {
+    addItem(type, count = 1) {
         const max = CONFIG.ITEMS.MAX_ACCUMULATION;
-        if (this.inventory[type] < max) {
-            this.inventory[type]++;
+        if ((this.inventory[type] || 0) < max) {
+            this.inventory[type] = (this.inventory[type] || 0) + count;
             return true;
         }
         return false;
@@ -459,7 +489,7 @@ class GameState {
 
     // 使用寶物
     useItem(type) {
-        if (this.inventory[type] > 0) {
+        if ((this.inventory[type] || 0) > 0) {
             this.inventory[type]--;
             return true;
         }

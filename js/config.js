@@ -30,8 +30,9 @@ const CONFIG = {
 
     // 倒數計時設定 (秒)
     TIMER: {
-        BOSS: 20,
-        BIG_BOSS: 10,
+        NORMAL: 40,
+        BOSS: 30,
+        BIG_BOSS: 20,
         URGENT_THRESHOLD: 5 // 剩餘幾秒開始手震/變紅
     },
 
@@ -60,10 +61,25 @@ const CONFIG = {
 
     // 寶物配置
     ITEMS: {
-        MAX_ACCUMULATION: 3,
+        MAX_ACCUMULATION: 99, // 增加堆疊上限
         TYPES: {
-            TIME_STOP: 'timeStop',
-            MEDKIT: 'medkit'
-        }
+            TIME_STOP_S: 'timeStopS', // 小時間停止 +20s
+            TIME_STOP_L: 'timeStopL', // 大時間停止 +40s
+            MEDKIT_S: 'medkitS',     // 小治療藥水 +1 HP
+            MEDKIT_L: 'medkitL'      // 大治療藥水 +2 HP
+        },
+        SHOP: [
+            { id: 'medkitS', name: '小治療藥水', icon: '💊', desc: '回復 1 點愛心', price: 6, effect: { type: 'hp', value: 1 } },
+            { id: 'medkitL', name: '大治療藥水', icon: '💉', desc: '回復 2 點愛心', price: 10, effect: { type: 'hp', value: 2 } },
+            { id: 'timeStopS', name: '小時間停止', icon: '⏱️', desc: '倒數時間 +20 秒', price: 6, effect: { type: 'time', value: 20 } },
+            { id: 'timeStopL', name: '大時間停止', icon: '⏳', desc: '倒數時間 +40 秒', price: 10, effect: { type: 'time', value: 40 } }
+        ]
+    },
+
+    // 獎勵配置
+    REWARDS: {
+        NORMAL: { min: 1, max: 3 },
+        BOSS: { min: 4, max: 8 },
+        BIG_BOSS: { min: 10, max: 15 }
     }
 };
