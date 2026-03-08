@@ -374,23 +374,27 @@ class App {
     }
 
 
-    // 選擇拼音字母（拼音題專用）
-    selectPhoneticLetter(letter) {
+    // 選擇拼音字母（拼音題專用 - 字母重組）
+    selectPhoneticLetter(letter, originIndex) {
         const currentQ = this.gameState.currentQuestion;
 
         // 紀錄選擇
         currentQ.selectedLetters.push(letter);
-        currentQ.currentIndex++;
 
-        if (currentQ.currentIndex < currentQ.targetWord.length) {
-            // 尚未結束：刷新選項並更新 UI
-            currentQ.options = this.gameState.getPhoneticOptions(currentQ.targetWord, currentQ.currentIndex);
-            this.ui.updatePhoneticSpelling(currentQ);
+        // 從選項中移除
+        if (originIndex !== undefined && originIndex >= 0 && originIndex < currentQ.remainingOptions.length) {
+            currentQ.remainingOptions.splice(originIndex, 1);
         } else {
-            // 拼寫完成：顯示最後一個字母，清空選項，然後檢查最終結果
-            currentQ.options = []; // 清空選項
-            this.ui.updatePhoneticSpelling(currentQ);
+            // Fallback if index not provided
+            const index = currentQ.remainingOptions.indexOf(letter);
+            if (index > -1) currentQ.remainingOptions.splice(index, 1);
+        }
 
+        // 尚未結束：更新 UI
+        this.ui.updatePhoneticSpelling(currentQ);
+
+        // 檢查是否選完所有字母
+        if (currentQ.selectedLetters.length === currentQ.targetWord.length) {
             this.stopTimer();
             // 禁用按鈕
             document.querySelectorAll('.weapon-btn').forEach(btn => btn.disabled = true);
@@ -456,17 +460,17 @@ class App {
         }
     }
 
-    // 重新選擇拼音字母
+    // 重新選擇拼音字母 (取消剛剛選的字母)
     deselectPhoneticLetter(index) {
         const currentQ = this.gameState.currentQuestion;
         if (currentQ.mode !== 'phonetic-spelling') return;
 
-        // 回溯到該 index (只保留 index 之前的字母)
-        currentQ.selectedLetters = currentQ.selectedLetters.slice(0, index);
-        currentQ.currentIndex = index;
+        // 確保 index 有效
+        if (index < 0 || index >= currentQ.selectedLetters.length) return;
 
-        // 重新獲取該位元的選項
-        currentQ.options = this.gameState.getPhoneticOptions(currentQ.targetWord, currentQ.currentIndex);
+        // 移除該部分的字母並加回選項中
+        const removedLetter = currentQ.selectedLetters.splice(index, 1)[0];
+        currentQ.remainingOptions.push(removedLetter);
 
         // 更新 UI
         this.ui.updatePhoneticSpelling(currentQ);

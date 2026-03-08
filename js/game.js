@@ -400,9 +400,13 @@ class GameState {
         return this.currentQuestion;
     }
 
-    // 生成拼音題 (聽音拼寫)
+    // 生成拼音題 (聽音拼寫 - 字母重組)
     generatePhoneticSpellingQuestion(correctWord) {
         const word = correctWord.word.toLowerCase();
+
+        // 將單字切分為單一字母並打亂順序
+        const letters = word.split('');
+        const shuffledLetters = this.shuffleArray([...letters]);
 
         this.currentQuestion = {
             mode: 'phonetic-spelling',
@@ -410,29 +414,11 @@ class GameState {
             targetWord: word,
             correctWord: correctWord, // 原始物件
             selectedLetters: [],
-            currentIndex: 0,
-            options: this.getPhoneticOptions(word, 0)
+            remainingOptions: [...shuffledLetters], // 剩餘可選的字母池
+            options: shuffledLetters // 初始選項就是打亂後的所有字母
         };
 
         return this.currentQuestion;
-    }
-
-    // 獲取拼音題的候選字母
-    getPhoneticOptions(targetWord, index) {
-        const { optionCount } = CONFIG.GAME_PARAMS.PHONETIC_SPELLING;
-        const correctLetter = targetWord[index].toLowerCase();
-        const alphabet = 'abcdefghijklmnopqrstuvwxyz';
-
-        const options = [correctLetter];
-
-        while (options.length < optionCount) {
-            const randomLetter = alphabet[Math.floor(Math.random() * alphabet.length)];
-            if (!options.includes(randomLetter)) {
-                options.push(randomLetter);
-            }
-        }
-
-        return this.shuffleArray(options);
     }
 
     // 獲取錯誤選項 (未變更)

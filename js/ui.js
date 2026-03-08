@@ -229,19 +229,16 @@ class UI {
         </div>
       `;
     } else if (question.mode === 'phonetic-spelling') {
-      // 拼音題渲染
+      // 拼音題渲染 (字母重組)
       weaponsEl.innerHTML = `
-        <div class="phonetic-container">
+        <div class="phonetic-container word-assembly-container">
           <div class="selected-parts" id="phonetic-slots">
-            ${Array(question.targetWord.length).fill(0).map((_, i) => {
-        const char = question.selectedLetters[i] || '?';
-        const isFilled = i < question.selectedLetters.length;
-        return `<span class="word-part ${isFilled ? 'selected' : 'empty'}" ${isFilled ? `onclick="app.deselectPhoneticLetter(${i})"` : ''} style="${isFilled ? 'cursor: pointer;' : ''}">${char}</span>`;
-      }).join('')}
+            ${question.selectedLetters.map((char, index) => `<span class="word-part selected" onclick="app.deselectPhoneticLetter(${index})" style="cursor: pointer;">${char}</span>`).join('')}
+            ${Array(question.targetWord.length - question.selectedLetters.length).fill('<span class="word-part empty">?</span>').join('')}
           </div>
           <div class="remaining-options">
-            ${question.options.map(option => `
-              <button class="weapon-btn large-phonetic-btn" onclick="app.selectPhoneticLetter('${option}')">
+            ${question.remainingOptions.map((option, index) => `
+              <button class="weapon-btn large-phonetic-btn word-part-btn" onclick="app.selectPhoneticLetter('${option}', ${index})">
                 ${option}
               </button>
             `).join('')}
@@ -326,29 +323,26 @@ class UI {
     }
   }
 
-  // 更新拼音題顯示
+  // 更新拼音題顯示 (字母重組)
   updatePhoneticSpelling(question) {
     const slotsEl = document.getElementById('phonetic-slots');
     const weaponsEl = document.getElementById('weapons');
     if (!slotsEl || !weaponsEl) return;
 
     // 更新槽位
-    slotsEl.innerHTML = Array(question.targetWord.length).fill(0).map((_, i) => {
-      const char = question.selectedLetters[i] || '?';
-      const isFilled = i < question.selectedLetters.length;
-      return `<span class="word-part ${isFilled ? 'selected' : 'empty'}" ${isFilled ? `onclick="app.deselectPhoneticLetter(${i})"` : ''} style="${isFilled ? 'cursor: pointer;' : ''}">${char}</span>`;
-    }).join('');
+    slotsEl.innerHTML = `
+        ${question.selectedLetters.map((char, index) => `<span class="word-part selected" onclick="app.deselectPhoneticLetter(${index})" style="cursor: pointer;">${char}</span>`).join('')}
+        ${Array(question.targetWord.length - question.selectedLetters.length).fill('<span class="word-part empty">?</span>').join('')}
+    `;
 
-    // 更新選項佈建
-    const optionsHtml = question.options.map(option => `
-      <button class="weapon-btn" onclick="app.selectPhoneticLetter('${option}')">
-        ${option}
-      </button>
-    `).join('');
-
+    // 更新剩餘選項佈建
     const remainingOptionsEl = weaponsEl.querySelector('.remaining-options');
     if (remainingOptionsEl) {
-      remainingOptionsEl.innerHTML = optionsHtml;
+      remainingOptionsEl.innerHTML = question.remainingOptions.map((option, index) => `
+        <button class="weapon-btn large-phonetic-btn word-part-btn" onclick="app.selectPhoneticLetter('${option}', ${index})">
+          ${option}
+        </button>
+      `).join('');
     }
   }
 
