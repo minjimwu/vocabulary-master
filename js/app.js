@@ -301,8 +301,8 @@ class App {
         // 更新 UI 顯示
         this.ui.updateWordAssembly(currentQ);
 
-        // 如果已選擇3個部分，檢查答案
-        if (currentQ.selectedParts.length === 3) {
+        // 如果已選擇所有部分，檢查答案
+        if (currentQ.selectedParts.length === currentQ.partsCount) {
             this.stopTimer();
             // 禁用所有按鈕
             document.querySelectorAll('.weapon-btn').forEach(btn => {
