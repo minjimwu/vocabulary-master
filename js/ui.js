@@ -4,16 +4,19 @@ class UI {
     this.app = document.getElementById('app');
   }
 
-  // 渲染關卡選擇畫面
-  // stageMap: 由 GameState.generateStageMap 生成的數組
   renderStageSelection(category, progressManager, stageMap) {
+    const coins = progressManager.getCoins();
+
     this.app.innerHTML = `
       <div class="stage-selection">
-        <h1>選擇關卡 - ${category}</h1>
+        <div class="top-bar">
+          <div class="coin-display">💰 <span>${coins}</span></div>
+          <button class="back-btn-small" onclick="ui.renderCategorySelection()">🔙 返回</button>
+        </div>
+        <h1>${category}</h1>
         <div class="stages-grid">
           ${this.generateStageButtons(category, progressManager, stageMap)}
         </div>
-        <button class="back-btn" onclick="ui.renderCategorySelection()">返回</button>
       </div>
     `;
   }
@@ -125,12 +128,10 @@ class UI {
             </div>
           </div>
           
-          <!-- 背包僅在魔王關卡顯示，且放入怪物欄右上角 -->
-          ${(gameState.isBoss || gameState.isBigBoss) ? `
-            <div id="inventory-container-wrapper" class="monster-inventory-wrapper">
-              ${this.renderInventory(gameState.inventory)}
-            </div>
-          ` : ''}
+          <!-- 背包在所有關卡顯示 -->
+          <div id="inventory-container-wrapper" class="monster-inventory-wrapper">
+            ${this.renderInventory(gameState.inventory)}
+          </div>
         </div>
 
         <div class="battle-area">
@@ -150,25 +151,26 @@ class UI {
 
   // 渲染背包
   renderInventory(inventory) {
-    const timeStopType = CONFIG.ITEMS.TYPES.TIME_STOP;
-    const medkitType = CONFIG.ITEMS.TYPES.MEDKIT;
+    const types = CONFIG.ITEMS.TYPES;
+
+    const items = [
+      { type: types.MEDKIT_S, icon: '💊', title: '小治療藥水', action: 'useMedkit' },
+      { type: types.MEDKIT_L, icon: '💉', title: '大治療藥水', action: 'useMedkit' },
+      { type: types.TIME_STOP_S, icon: '⏱️', title: '小時間停止', action: 'useTimeStop' },
+      { type: types.TIME_STOP_L, icon: '⏳', title: '大時間停止', action: 'useTimeStop' }
+    ];
 
     return `
-      <div class="inventory-container">
-        <div class="inventory-item">
-          <button class="item-btn" onclick="app.useTimeStop()" title="時間停止" 
-                  ${inventory[timeStopType] <= 0 ? 'disabled' : ''}>
-            ⏱️
-            <span class="item-badge">${inventory[timeStopType]}</span>
-          </button>
-        </div>
-        <div class="inventory-item">
-          <button class="item-btn" onclick="app.useMedkit()" title="醫療包" 
-                  ${inventory[medkitType] <= 0 ? 'disabled' : ''}>
-            💊
-            <span class="item-badge">${inventory[medkitType]}</span>
-          </button>
-        </div>
+      <div class="inventory-container extended">
+        ${items.map(item => `
+          <div class="inventory-item">
+            <button class="item-btn" onclick="app.${item.action}('${item.type}')" title="${item.title}" 
+                    ${(inventory[item.type] || 0) <= 0 ? 'disabled' : ''}>
+              ${item.icon}
+              <span class="item-badge">${inventory[item.type] || 0}</span>
+            </button>
+          </div>
+        `).join('')}
       </div>
     `;
   }
@@ -667,8 +669,7 @@ class UI {
     };
 
     const categories = Object.keys(app.vocabularyData || {});
-
-    let buttonsHtml = categories.map(category => {
+    const buttonsHtml = categories.map(category => {
       const icon = icons[category] || '❓';
       return `
           <button class="category-btn" onclick="app.selectCategory('${category}')">
@@ -678,13 +679,68 @@ class UI {
             `;
     }).join('');
 
+    const shopHtml = `
+      <button class="category-btn shop-cat" onclick="app.showShop()">
+        <div class="category-icon">🛒</div>
+        <div class="category-name">神秘商店</div>
+      </button>
+    `;
+
     this.app.innerHTML = `
       <div class="category-selection">
         <h1>單字王</h1>
         <div class="categories-grid">
+          ${shopHtml}
           ${buttonsHtml}
         </div>
         <button class="settings-btn" onclick="app.showSettings()">⚙️ 設定</button>
+      </div>
+    `;
+  }
+
+  // 渲染商店
+  renderShop(coins, inventory, shopConfig) {
+    this.app.innerHTML = `
+      <div class="shop-screen fancy">
+        <div class="shop-container">
+          <div class="shop-header">
+            <button class="back-btn-fancy" onclick="ui.renderCategorySelection()">🔙 返回</button>
+            <div class="shop-title-wrapper">
+              <span class="shop-icon-main">🛒</span>
+              <h1>神秘商店</h1>
+            </div>
+            <div class="shop-coin-display">
+              <span class="coin-icon-pulse">💰</span>
+              <span id="shop-coins">${coins}</span>
+            </div>
+          </div>
+          
+          <div class="shop-shelf">
+            ${shopConfig.map(item => {
+      const currentCount = inventory[item.id] || 0;
+      const canAfford = coins >= item.price;
+      return `
+                <div class="shop-card ${canAfford ? 'can-buy' : 'too-poor'}">
+                  <div class="item-visual">
+                    <div class="item-glow"></div>
+                    <div class="item-emoji-large">${item.icon}</div>
+                  </div>
+                  <div class="item-info">
+                    <h3 class="item-name">${item.name}</h3>
+                    <p class="item-desc">${item.desc}</p>
+                    <div class="item-stock">目前持有: <span>${currentCount}</span></div>
+                  </div>
+                  <button class="purchase-button" 
+                          onclick="app.buyItem('${item.id}')"
+                          ${!canAfford ? 'disabled' : ''}>
+                    <span class="price-tag">💰 ${item.price}</span>
+                    <span class="buy-text">${canAfford ? '購買' : '金幣不足'}</span>
+                  </button>
+                </div>
+              `;
+    }).join('')}
+          </div>
+        </div>
       </div>
     `;
   }
@@ -731,21 +787,19 @@ class UI {
     `;
   }
 
-  // 渲染寶箱
-  renderTreasureChest(type, onOpen) {
+  // 渲染寶箱 (改為金幣)
+  renderTreasureChest(amount, onOpen) {
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
 
-    const itemInfo = type === CONFIG.ITEMS.TYPES.TIME_STOP ? { icon: '⏱️', name: '時間停止' } : { icon: '💊', name: '醫療包' };
-
     overlay.innerHTML = `
       <div class="modal-content chest-modal-content">
-        <div class="modal-title" style="color: #fbbf24;">發現寶箱！</div>
+        <div class="modal-title" style="color: #fbbf24;">戰鬥勝利！</div>
         <div id="chest-animation" class="chest-animation">🎁</div>
         <div id="reward-display" class="reward-display">
-          <div class="reward-icon">${itemInfo.icon}</div>
-          <div class="reward-name">獲得 ${itemInfo.name}！</div>
-          <button class="next-btn" id="claim-btn">收下寶物</button>
+          <div class="reward-icon">💰</div>
+          <div class="reward-name">獲得 ${amount} 枚金幣！</div>
+          <button class="next-btn" id="claim-btn">收下金幣</button>
         </div>
       </div>
     `;
