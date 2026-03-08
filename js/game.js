@@ -337,23 +337,49 @@ class GameState {
     generateWordAssemblyQuestion(correctWord) {
         const word = correctWord.word;
         const len = word.length;
-        const partsCount = CONFIG.GAME_PARAMS.WORD_ASSEMBLY.partsCount;
 
-        // 將單字切分成指定份數 (partsCount)
+        // 將單字依照自然發音法 (Phonics) 邏輯切分成 2-5 份
         let parts = [];
 
-        if (len <= partsCount) {
-            // 長度不足或剛好：每個字母一個部分
+        if (len <= 2) {
+            // 長度不足或為2：直接每個字母切分
             parts = word.split('');
         } else {
-            // 盡量平均分配
-            let remainingLen = len;
-            let currentStart = 0;
-            for (let i = 0; i < partsCount; i++) {
-                const count = i === partsCount - 1 ? remainingLen : Math.floor(remainingLen / (partsCount - i));
-                parts.push(word.substring(currentStart, currentStart + count));
-                currentStart += count;
-                remainingLen -= count;
+            // 基礎音節正則表達式：尋找母音群及其前後的子音
+            // [^aeiouy]* (開頭子音) + [aeiouy]+ (母音) + [^aeiouy]*$ (字尾子音) 或 [^aeiouy](?=[^aeiouy]) (母音後的單個子音，前提是後面還有子音)
+            const match = word.match(/[^aeiouy]*[aeiouy]+(?:[^aeiouy]*$|[^aeiouy](?=[^aeiouy]))?/gi);
+
+            if (!match) {
+                // 如果正則完全沒有匹配 (例如全是子音如 "rhythm" 或未命中)，則對半切分
+                const mid = Math.floor(len / 2);
+                parts = [word.substring(0, mid), word.substring(mid)];
+            } else {
+                parts = [...match];
+
+                // 確保沒有匹配到母音的尾部字母不會丟失
+                const joined = parts.join('');
+                if (joined.length < len) {
+                    parts[parts.length - 1] += word.substring(joined.length);
+                }
+
+                // 若超過 5 份，合併相鄰最短的兩個部分
+                while (parts.length > 5) {
+                    let minLen = 999;
+                    let mergeIdx = 0;
+                    for (let i = 0; i < parts.length - 1; i++) {
+                        if (parts[i].length + parts[i + 1].length < minLen) {
+                            minLen = parts[i].length + parts[i + 1].length;
+                            mergeIdx = i;
+                        }
+                    }
+                    parts.splice(mergeIdx, 2, parts[mergeIdx] + parts[mergeIdx + 1]);
+                }
+
+                // 若只有 1 份，但單字超過 2 個字母，從中間對半切以增加題目的難度與互動
+                if (parts.length === 1 && len > 2) {
+                    const mid = Math.floor(len / 2);
+                    parts = [word.substring(0, mid), word.substring(mid)];
+                }
             }
         }
 
@@ -368,7 +394,7 @@ class GameState {
             correctWord: correctWord,
             selectedParts: [], // 玩家已選擇的部分
             remainingOptions: [...shuffledParts], // 剩餘可選的部分
-            partsCount: partsCount // 保存分割份數供 UI 參考
+            partsCount: parts.length // 保存分割數量供 UI 參考渲染
         };
 
         return this.currentQuestion;
