@@ -22,11 +22,12 @@ const CONFIG = {
 
     // 題型出現權重 (0 ~ 1)
     QUESTION_WEIGHTS: {
-        WORD_ASSEMBLY: 0.2,
-        FILL_IN_BLANK: 0.15,
-        PHONETIC_SPELLING: 0.25, // 聽音 -> 拼字母
-        ZH_TO_SPELLING: 0.2,    // 中文 -> 拼字母 (新增)
-        TRANSLATION: 0.2
+        WORD_ASSEMBLY: 0.15,
+        FILL_IN_BLANK: 0.10,
+        PHONETIC_SPELLING: 0.2,  // 聽音 -> 拼字母
+        ZH_TO_SPELLING: 0.2,     // 中文 -> 拼字母
+        BLANK_TO_SPELLING: 0.2,  // 填空 -> 拼字母 (新增)
+        TRANSLATION: 0.15
     },
 
     // 倒數計時設定 (秒)

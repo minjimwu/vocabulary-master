@@ -393,16 +393,22 @@ class App {
         // 尚未結束：更新 UI
         this.ui.updatePhoneticSpelling(currentQ);
 
-        // 檢查是否選完所有字母
-        if (currentQ.selectedLetters.length === currentQ.targetWord.length) {
+        // 檢查是否選完所需字母 (填空拼字題依 targetLetters；其餘依字母全長)
+        const requiredCount = currentQ.targetLetters ? currentQ.targetLetters.length : currentQ.targetWord.length;
+        if (currentQ.selectedLetters.length === requiredCount) {
             this.stopTimer();
             // 禁用按鈕
             document.querySelectorAll('.weapon-btn').forEach(btn => btn.disabled = true);
 
             setTimeout(() => {
-                // 檢查最終拼寫字串是否與目標一致
-                const finalSpelling = currentQ.selectedLetters.join('').toLowerCase();
-                const isCorrect = finalSpelling === currentQ.targetWord.toLowerCase();
+                // 填空拼字題：按位置順序比對 targetLetters；其餘：比對字母全字
+                let isCorrect;
+                if (currentQ.mode === 'blank-to-spelling') {
+                    isCorrect = currentQ.selectedLetters.every((l, i) => l === currentQ.targetLetters[i]);
+                } else {
+                    const finalSpelling = currentQ.selectedLetters.join('').toLowerCase();
+                    isCorrect = finalSpelling === currentQ.targetWord.toLowerCase();
+                }
 
                 if (isCorrect) {
                     // 答對
@@ -463,7 +469,8 @@ class App {
     // 重新選擇拼音字母 (取消剛剛選的字母)
     deselectPhoneticLetter(index) {
         const currentQ = this.gameState.currentQuestion;
-        if (currentQ.mode !== 'phonetic-spelling' && currentQ.mode !== 'zh-to-spelling') return;
+        const allowedModes = ['phonetic-spelling', 'zh-to-spelling', 'blank-to-spelling'];
+        if (!allowedModes.includes(currentQ.mode)) return;
 
         // 確保 index 有效
         if (index < 0 || index >= currentQ.selectedLetters.length) return;

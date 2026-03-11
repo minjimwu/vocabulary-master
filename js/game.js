@@ -234,6 +234,11 @@ class GameState {
             return this.generateZhToSpellingQuestion(correctWord);
         }
 
+        // 填空拼字題 (願示字 -> 拼漏字母)需要至少4個字母
+        if (correctWord.word.length >= 4 && rand < (weights.WORD_ASSEMBLY + weights.FILL_IN_BLANK + weights.PHONETIC_SPELLING + (weights.ZH_TO_SPELLING || 0) + (weights.BLANK_TO_SPELLING || 0))) {
+            return this.generateBlankToSpellingQuestion(correctWord);
+        }
+
         // 中文->英文 或 英文->中文 (各佔剩餘的一部分)
         const mode = Math.random() < 0.5 ? 'zh-to-en' : 'en-to-zh';
         const wrongOptions = this.getWrongOptions(correctWord, 2);
@@ -470,6 +475,60 @@ class GameState {
             mode: 'zh-to-spelling',
             weakness: correctWord.chinese, // 顯示中文提示
             targetWord: word,
+            correctWord: correctWord,
+            selectedLetters: [],
+            remainingOptions: [...shuffledLetters],
+            options: shuffledLetters
+        };
+
+        return this.currentQuestion;
+    }
+
+    // 生成填空拼字題 (顯示部分字母 -> 拼出缺失字母)
+    generateBlankToSpellingQuestion(correctWord) {
+        const word = correctWord.word.toLowerCase();
+        const len = word.length;
+
+        // 隨機決定挖空數量 (2-4個，不超過字母總長)
+        const blankCount = Math.min(len - 1, Math.floor(Math.random() * 3) + 2); // 2, 3, 或 4
+
+        // 隨機選择挚空位置 (不需連續)
+        const allPositions = Array.from({ length: len }, (_, i) => i);
+        const shuffledPositions = this.shuffleArray([...allPositions]);
+        const blankPositions = shuffledPositions.slice(0, blankCount).sort((a, b) => a - b);
+
+        // 和抽出各位置的字母 (依位置順序)
+        const targetLetters = blankPositions.map(i => word[i]);
+
+        // 將對應位置替換為 _
+        const wordArr = word.split('');
+        blankPositions.forEach(i => { wordArr[i] = '_'; });
+        const maskedWord = wordArr.join('');
+
+        // 產生 3 個不屬於該單字的隨機干擾字母
+        const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+        const wordLetterSet = new Set(word.split(''));
+        const wrongLetters = [];
+        let attempts = 0;
+
+        while (wrongLetters.length < 3 && attempts < 100) {
+            attempts++;
+            const randomChar = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+            if (!wordLetterSet.has(randomChar) && !wrongLetters.includes(randomChar)) {
+                wrongLetters.push(randomChar);
+            }
+        }
+
+        // 將正確字母與干擾字母合併後打亂
+        const allLetters = [...targetLetters, ...wrongLetters];
+        const shuffledLetters = this.shuffleArray(allLetters);
+
+        this.currentQuestion = {
+            mode: 'blank-to-spelling',
+            weakness: correctWord.chinese, // 中文提示
+            maskedWord: maskedWord,         // 顯示在界面上方
+            targetWord: word,
+            targetLetters: targetLetters,   // 正確字母依序
             correctWord: correctWord,
             selectedLetters: [],
             remainingOptions: [...shuffledLetters],

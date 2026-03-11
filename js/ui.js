@@ -199,6 +199,8 @@ class UI {
       modeHintEl.textContent = '👂 聽音並選擇字母拼寫單字';
     } else if (question.mode === 'zh-to-spelling') {
       modeHintEl.textContent = '💬 依照中文語義選擇字母拼寫單字';
+    } else if (question.mode === 'blank-to-spelling') {
+      modeHintEl.textContent = '🧩 依序選擇字母，填入空白位置';
     } else {
       modeHintEl.textContent = question.mode === 'zh-to-en' ? '選擇英文武器' : '選擇中文武器';
     }
@@ -239,6 +241,31 @@ class UI {
           <div class="selected-parts" id="phonetic-slots">
             ${question.selectedLetters.map((char, index) => `<span class="word-part selected" onclick="app.deselectPhoneticLetter(${index})" style="cursor: pointer;">${char}</span>`).join('')}
             ${Array(question.targetWord.length - question.selectedLetters.length).fill('<span class="word-part empty">?</span>').join('')}
+          </div>
+          <div class="remaining-options">
+            ${question.remainingOptions.map((option, index) => `
+              <button class="weapon-btn large-phonetic-btn word-part-btn" onclick="app.selectPhoneticLetter('${option}', ${index})">
+                ${option}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    } else if (question.mode === 'blank-to-spelling') {
+      // 填空拼字題渲染：顯示或列單字 + 字母選項
+      const slotCount = question.targetLetters.length;
+      weaponsEl.innerHTML = `
+        <div class="blank-to-spelling-container word-assembly-container">
+          <div class="masked-word-display">
+            ${question.maskedWord.split('').map(ch =>
+        ch === '_'
+          ? `<span class="word-part empty">_</span>`
+          : `<span class="word-part fixed">${ch}</span>`
+      ).join('')}
+          </div>
+          <div class="selected-parts" id="phonetic-slots">
+            ${question.selectedLetters.map((char, index) => `<span class="word-part selected" onclick="app.deselectPhoneticLetter(${index})" style="cursor: pointer;">${char}</span>`).join('')}
+            ${Array(slotCount - question.selectedLetters.length).fill('<span class="word-part empty">?</span>').join('')}
           </div>
           <div class="remaining-options">
             ${question.remainingOptions.map((option, index) => `
@@ -327,16 +354,19 @@ class UI {
     }
   }
 
-  // 更新拼音題顯示 (字母重組)
+  // 更新拼音題 / 中文拼字題 / 填空拼字題顯示 (字母重組)
   updatePhoneticSpelling(question) {
     const slotsEl = document.getElementById('phonetic-slots');
     const weaponsEl = document.getElementById('weapons');
     if (!slotsEl || !weaponsEl) return;
 
+    // 槽位數量：blank-to-spelling 依 targetLetters；其餘依 targetWord
+    const slotCount = question.targetLetters ? question.targetLetters.length : question.targetWord.length;
+
     // 更新槽位
     slotsEl.innerHTML = `
         ${question.selectedLetters.map((char, index) => `<span class="word-part selected" onclick="app.deselectPhoneticLetter(${index})" style="cursor: pointer;">${char}</span>`).join('')}
-        ${Array(question.targetWord.length - question.selectedLetters.length).fill('<span class="word-part empty">?</span>').join('')}
+        ${Array(slotCount - question.selectedLetters.length).fill('<span class="word-part empty">?</span>').join('')}
     `;
 
     // 更新剩餘選項佈建
