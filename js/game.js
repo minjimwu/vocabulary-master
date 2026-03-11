@@ -404,9 +404,26 @@ class GameState {
     generatePhoneticSpellingQuestion(correctWord) {
         const word = correctWord.word.toLowerCase();
 
-        // 將單字切分為單一字母並打亂順序
+        // 將單字切分為單一字母
         const letters = word.split('');
-        const shuffledLetters = this.shuffleArray([...letters]);
+
+        // 產生 3 個不在單字內的隨機干擾字母
+        const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+        const wrongLetters = [];
+        let attempts = 0;
+
+        while (wrongLetters.length < 3 && attempts < 100) {
+            attempts++;
+            const randomChar = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+            // 確保隨機字母不包含在原始單字中，且尚未被加入干擾項目中
+            if (!letters.includes(randomChar) && !wrongLetters.includes(randomChar)) {
+                wrongLetters.push(randomChar);
+            }
+        }
+
+        // 將原始字母與干擾字母合併後，一起打亂順序
+        const allLetters = [...letters, ...wrongLetters];
+        const shuffledLetters = this.shuffleArray(allLetters);
 
         this.currentQuestion = {
             mode: 'phonetic-spelling',
