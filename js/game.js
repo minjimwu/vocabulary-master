@@ -224,9 +224,14 @@ class GameState {
             return this.generateFillInBlankQuestion(correctWord);
         }
 
-        // 拼音題：新增類型
+        // 拼音題 (聽音 -> 拼字母)
         if (rand < (weights.WORD_ASSEMBLY + weights.FILL_IN_BLANK + weights.PHONETIC_SPELLING)) {
             return this.generatePhoneticSpellingQuestion(correctWord);
+        }
+
+        // 中文拼字題 (中文 -> 拼字母)
+        if (rand < (weights.WORD_ASSEMBLY + weights.FILL_IN_BLANK + weights.PHONETIC_SPELLING + (weights.ZH_TO_SPELLING || 0))) {
+            return this.generateZhToSpellingQuestion(correctWord);
         }
 
         // 中文->英文 或 英文->中文 (各佔剩餘的一部分)
@@ -433,6 +438,42 @@ class GameState {
             selectedLetters: [],
             remainingOptions: [...shuffledLetters], // 剩餘可選的字母池
             options: shuffledLetters // 初始選項就是打亂後的所有字母
+        };
+
+        return this.currentQuestion;
+    }
+
+    // 生成中文拼字題 (中文提示 -> 拼字母)
+    generateZhToSpellingQuestion(correctWord) {
+        const word = correctWord.word.toLowerCase();
+
+        // 將單字切分為單一字母
+        const letters = word.split('');
+
+        // 產生 3 個不在單字內的隨機干擾字母
+        const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+        const wrongLetters = [];
+        let attempts = 0;
+
+        while (wrongLetters.length < 3 && attempts < 100) {
+            attempts++;
+            const randomChar = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+            if (!letters.includes(randomChar) && !wrongLetters.includes(randomChar)) {
+                wrongLetters.push(randomChar);
+            }
+        }
+
+        const allLetters = [...letters, ...wrongLetters];
+        const shuffledLetters = this.shuffleArray(allLetters);
+
+        this.currentQuestion = {
+            mode: 'zh-to-spelling',
+            weakness: correctWord.chinese, // 顯示中文提示
+            targetWord: word,
+            correctWord: correctWord,
+            selectedLetters: [],
+            remainingOptions: [...shuffledLetters],
+            options: shuffledLetters
         };
 
         return this.currentQuestion;

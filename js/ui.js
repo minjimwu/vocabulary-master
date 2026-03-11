@@ -195,6 +195,10 @@ class UI {
       modeHintEl.textContent = '選擇正確的字母填入空格';
     } else if (question.mode === 'word-assembly') {
       modeHintEl.textContent = '依序選擇正確的部分拼成單字';
+    } else if (question.mode === 'phonetic-spelling') {
+      modeHintEl.textContent = '👂 聽音並選擇字母拼寫單字';
+    } else if (question.mode === 'zh-to-spelling') {
+      modeHintEl.textContent = '💬 依照中文語義選擇字母拼寫單字';
     } else {
       modeHintEl.textContent = question.mode === 'zh-to-en' ? '選擇英文武器' : '選擇中文武器';
     }
@@ -204,7 +208,7 @@ class UI {
     weaknessEl.style.cursor = 'pointer';
     weaknessEl.onclick = () => {
       // 拼音題或英文出題模式都允許點擊重聽
-      if (question.mode === 'phonetic-spelling' || question.mode === 'en-to-zh') {
+      if (question.mode === 'phonetic-spelling' || question.mode === 'en-to-zh' || question.mode === 'zh-to-spelling') {
         app.audio.speak(question.correctWord.word);
       }
     };
@@ -228,8 +232,8 @@ class UI {
           </div>
         </div>
       `;
-    } else if (question.mode === 'phonetic-spelling') {
-      // 拼音題渲染 (字母重組)
+    } else if (question.mode === 'phonetic-spelling' || question.mode === 'zh-to-spelling') {
+      // 拼音題 / 中文拼字題渲染 (字母重組)
       weaponsEl.innerHTML = `
         <div class="phonetic-container word-assembly-container">
           <div class="selected-parts" id="phonetic-slots">

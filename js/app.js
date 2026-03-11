@@ -463,7 +463,7 @@ class App {
     // 重新選擇拼音字母 (取消剛剛選的字母)
     deselectPhoneticLetter(index) {
         const currentQ = this.gameState.currentQuestion;
-        if (currentQ.mode !== 'phonetic-spelling') return;
+        if (currentQ.mode !== 'phonetic-spelling' && currentQ.mode !== 'zh-to-spelling') return;
 
         // 確保 index 有效
         if (index < 0 || index >= currentQ.selectedLetters.length) return;
