@@ -12,6 +12,7 @@ class App {
         this.timer = null; // 計時器 Interval
         this.timeLeft = 0;
         this.ctrlCount = 0; // 密技計數
+        this.checkingAnswer = false;
     }
 
     // 初始化應用
@@ -78,6 +79,7 @@ class App {
 
     // 顯示下一題
     showNextQuestion() {
+        this.checkingAnswer = false;
         const question = this.gameState.generateQuestion();
 
         if (!question) {
@@ -261,6 +263,7 @@ class App {
 
     // 取消選擇單字部分
     deselectWordPart(index) {
+        if (this.checkingAnswer) return;
         const currentQ = this.gameState.currentQuestion;
 
         // 確保 index 有效
@@ -283,6 +286,7 @@ class App {
 
     // 選擇單字部分（單字組成題專用）
     selectWordPart(part) {
+        if (this.checkingAnswer) return;
         const currentQ = this.gameState.currentQuestion;
 
         // 添加選中的部分
@@ -303,6 +307,7 @@ class App {
 
         // 如果已選擇所有部分，檢查答案
         if (currentQ.selectedParts.length === currentQ.partsCount) {
+            this.checkingAnswer = true;
             this.stopTimer();
             // 禁用所有按鈕
             document.querySelectorAll('.weapon-btn').forEach(btn => {
@@ -376,6 +381,7 @@ class App {
 
     // 選擇拼音字母（拼音題專用 - 字母重組）
     selectPhoneticLetter(letter, originIndex) {
+        if (this.checkingAnswer) return;
         const currentQ = this.gameState.currentQuestion;
 
         // 紀錄選擇
@@ -396,6 +402,7 @@ class App {
         // 檢查是否選完所需字母 (填空拼字題依 targetLetters；其餘依字母全長)
         const requiredCount = currentQ.targetLetters ? currentQ.targetLetters.length : currentQ.targetWord.length;
         if (currentQ.selectedLetters.length === requiredCount) {
+            this.checkingAnswer = true;
             this.stopTimer();
             // 禁用按鈕
             document.querySelectorAll('.weapon-btn').forEach(btn => btn.disabled = true);
@@ -468,6 +475,7 @@ class App {
 
     // 重新選擇拼音字母 (取消剛剛選的字母)
     deselectPhoneticLetter(index) {
+        if (this.checkingAnswer) return;
         const currentQ = this.gameState.currentQuestion;
         const allowedModes = ['phonetic-spelling', 'zh-to-spelling', 'blank-to-spelling'];
         if (!allowedModes.includes(currentQ.mode)) return;
@@ -489,6 +497,11 @@ class App {
     // 結束關卡
     endStage(isVictory) {
         const stats = this.gameState.getStats();
+        // Must check before saveStageResult marks it as cleared
+        const isNewStage = isVictory && !this.progressManager.isStageCleared(
+            this.currentCategory,
+            this.gameState.stageNumber
+        );
 
         if (isVictory) {
             this.progressManager.saveStageResult(
@@ -512,7 +525,7 @@ class App {
                 this.ui.showFinalVictoryAnimation(() => {
                     this.openTreasureChest(() => {
                         this.ui.renderCategorySelection();
-                    }, 'BIG_BOSS');
+                    }, 'BIG_BOSS', isNewStage);
                 });
                 return;
             } else if (this.gameState.isBoss) {
@@ -535,7 +548,7 @@ class App {
                     stats,
                     this.gameState
                 );
-            }, stageType);
+            }, stageType, isNewStage);
         } else {
             this.ui.renderStageResult(
                 isVictory,
@@ -552,9 +565,11 @@ class App {
     // --- 商店與寶物系統 ---
 
     // 開啟寶箱 (改為獲得金幣)
-    openTreasureChest(onComplete, stageType) {
+    openTreasureChest(onComplete, stageType, isNewStage = true) {
         const range = CONFIG.REWARDS[stageType] || CONFIG.REWARDS.NORMAL;
-        const amount = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
+        let amount = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
+        // Repeat stage: ~1/10 reward (min 1)
+        if (!isNewStage) amount = Math.max(1, Math.floor(amount / 10));
 
         this.ui.renderTreasureChest(amount, () => {
             this.progressManager.addCoins(amount);

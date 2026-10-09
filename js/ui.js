@@ -707,18 +707,10 @@ class UI {
             `;
     }).join('');
 
-    const shopHtml = `
-      <button class="category-btn shop-cat" onclick="app.showShop()">
-        <div class="category-icon">🛒</div>
-        <div class="category-name">神秘商店</div>
-      </button>
-    `;
-
     this.app.innerHTML = `
       <div class="category-selection">
         <h1>單字王</h1>
         <div class="categories-grid">
-          ${shopHtml}
           ${buttonsHtml}
         </div>
         <button class="settings-btn" onclick="app.showSettings()">⚙️ 設定</button>

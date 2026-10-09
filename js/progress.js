@@ -37,6 +37,7 @@ class ProgressManager {
         const progress = this.getProgress();
         progress.coins = (progress.coins || 0) + amount;
         this.saveProgress(progress);
+        fetch(`/api/earn-coins?amount=${amount}`, { method: 'POST' }).catch(() => {});
     }
 
     // 獲取背包
@@ -82,6 +83,10 @@ class ProgressManager {
         }
 
         this.saveProgress(progress);
+
+        if (isCleared) {
+            fetch(`/api/stage-clear?category=${encodeURIComponent(category)}&stage=${stageNumber}`, { method: 'POST' }).catch(() => {});
+        }
     }
 
     // 檢查關卡是否解鎖

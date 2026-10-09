@@ -1,8 +1,8 @@
 // 遊戲配置
 const CONFIG = {
-    // Google Sheets 數據源
-    VOCABULARY_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTN4Eqv8Ojo7DTOmZ2Jx62xLGfiZI49QiWVg2tZyulpRoysEekhQIFyva59t77OwP-vkvEwSIR6Z0rg/pub?gid=0&single=true&output=csv',
-    CATEGORIES_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTN4Eqv8Ojo7DTOmZ2Jx62xLGfiZI49QiWVg2tZyulpRoysEekhQIFyva59t77OwP-vkvEwSIR6Z0rg/pub?gid=202243508&single=true&output=csv',
+    // Google Sheets 數據源 (透過本地 proxy 讀取，支援離線 cache)
+    VOCABULARY_URL: '/api/vocab-proxy?url=' + encodeURIComponent('https://docs.google.com/spreadsheets/d/e/2PACX-1vTN4Eqv8Ojo7DTOmZ2Jx62xLGfiZI49QiWVg2tZyulpRoysEekhQIFyva59t77OwP-vkvEwSIR6Z0rg/pub?gid=0&single=true&output=csv'),
+    CATEGORIES_URL: '/api/vocab-proxy?url=' + encodeURIComponent('https://docs.google.com/spreadsheets/d/e/2PACX-1vTN4Eqv8Ojo7DTOmZ2Jx62xLGfiZI49QiWVg2tZyulpRoysEekhQIFyva59t77OwP-vkvEwSIR6Z0rg/pub?gid=202243508&single=true&output=csv'),
 
     // 基礎遊戲參數
     PLAYER_HEARTS: 3, // 玩家初始愛心數量
@@ -80,8 +80,8 @@ const CONFIG = {
 
     // 獎勵配置
     REWARDS: {
-        NORMAL: { min: 1, max: 3 },
-        BOSS: { min: 4, max: 8 },
-        BIG_BOSS: { min: 10, max: 15 }
+        NORMAL: { min: 10, max: 30 },
+        BOSS: { min: 40, max: 80 },
+        BIG_BOSS: { min: 100, max: 150 }
     }
 };
