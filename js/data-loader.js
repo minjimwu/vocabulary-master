@@ -37,6 +37,11 @@ class DataLoader {
 
     // 加載並解析詞彙數據
     async loadVocabulary() {
+        if (window.EMBEDDED_VOCABULARY && Object.keys(window.EMBEDDED_VOCABULARY).length > 0) {
+            this.vocabularyData = window.EMBEDDED_VOCABULARY;
+            return this.vocabularyData;
+        }
+
         const csv = await this.fetchCSV(CONFIG.VOCABULARY_URL);
         const parsed = this.parseCSV(csv);
 
@@ -58,6 +63,11 @@ class DataLoader {
 
     // 加載並解析分類數據
     async loadCategories() {
+        if (window.EMBEDDED_CATEGORIES && window.EMBEDDED_CATEGORIES.length > 0) {
+            this.categoriesData = window.EMBEDDED_CATEGORIES;
+            return this.categoriesData;
+        }
+
         const csv = await this.fetchCSV(CONFIG.CATEGORIES_URL);
         this.categoriesData = this.parseCSV(csv);
         return this.categoriesData;
